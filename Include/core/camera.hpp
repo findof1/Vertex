@@ -38,7 +38,7 @@ public:
       : Front(glm::vec3(0.0f, 0.0f, -1.0f)),
         MovementSpeed(2.5f),
         MouseSensitivity(0.1f),
-        Zoom(90.0f)
+        Zoom(75.0f)
   {
     Position = position;
     WorldUp = up;

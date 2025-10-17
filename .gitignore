@@ -2,3 +2,6 @@
 build
 CMakeLists.txt
 CMakePresets.json
+build.sh
+
+.clangd
