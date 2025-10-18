@@ -8,10 +8,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "core/camera.hpp"
 #include "core/ecs/coordinator.hpp"
-#include "core/components.hpp"
+#include "core/ecs/components.hpp"
 #include "core/model.hpp"
 #include "core/material.hpp"
-#include "core/render_system.hpp"
+#include "core/ecs/render_system.hpp"
+#include <core/texture_manager.hpp>
 
 std::string loadShaderSource(const char *filepath)
 {
@@ -107,6 +108,10 @@ void processInput(GLFWwindow *window, float deltaTime)
     camera.processKeyboard(LEFT, deltaTime);
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     camera.processKeyboard(RIGHT, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    camera.processKeyboard(UP, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+    camera.processKeyboard(DOWN, deltaTime);
 }
 
 const int WIDTH = 1600;
@@ -114,11 +119,12 @@ const int HEIGHT = 1200;
 
 int main()
 {
-  if (!glfwInit()) return -1;
+  if (!glfwInit())
+    return -1;
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Vertex ECS Demo", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Vertex Core Module Demo", NULL, NULL);
   if (!window)
   {
     glfwTerminate();
@@ -156,22 +162,43 @@ int main()
   }
   renderSystem->Init(coordinator);
 
+  // Initiate Texture Manager
+  TextureManager textureManager;
+
   // Create shader program
   unsigned int shaderProgram = createShaderProgram(
       "shaders/shader.vert",
       "shaders/shader.frag");
 
   // Create a cube entity
-  auto cubeModel = Model::createModelFromFile("res/models/cube.obj");
-  Entity cube = coordinator->CreateEntity();
-  TransformComponent cubeTransform{};
-  cubeTransform.translation = {0.0f, 0.0f, -5.0f};
-  cubeTransform.scale = {1.0f, 1.0f, 1.0f};
-  coordinator->AddComponent(cube, cubeTransform);
-  coordinator->AddComponent(cube, ModelComponent{cubeModel});
-  MaterialComponent cubeMat{std::make_shared<Material>()};
-  cubeMat.material->setColor(glm::vec3(0.0f, 1.0f, 0.3f));
-  coordinator->AddComponent(cube, cubeMat);
+  {
+    auto cubeModel = Model::createModelFromFile("assets/models/cube.obj");
+    Entity cube = coordinator->CreateEntity();
+    TransformComponent cubeTransform{};
+    cubeTransform.translation = {0.0f, 0.0f, -5.0f};
+    cubeTransform.scale = {1.0f, 1.0f, 1.0f};
+    coordinator->AddComponent(cube, cubeTransform);
+    coordinator->AddComponent(cube, ModelComponent{cubeModel});
+    MaterialComponent cubeMat{std::make_shared<Material>()};
+    cubeMat.material->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
+    cubeMat.material->setTexture(textureManager.load("assets/textures/fire.png"));
+    coordinator->AddComponent(cube, cubeMat);
+  }
+
+  // Create a vase entity
+  {
+    auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj");
+    Entity vase = coordinator->CreateEntity();
+    TransformComponent vaseTransform{};
+    vaseTransform.translation = {0.0f, 0.0f, 5.0f};
+    vaseTransform.scale = {1.0f, 1.0f, 1.0f};
+    vaseTransform.rotation = {0.0f, 180.0f, 0.0f};
+    coordinator->AddComponent(vase, vaseTransform);
+    coordinator->AddComponent(vase, ModelComponent{vaseModel});
+    MaterialComponent vaseMat{std::make_shared<Material>()};
+    vaseMat.material->setAlbedo(glm::vec3(1.0f, 0.0f, 0.0f));
+    coordinator->AddComponent(vase, vaseMat);
+  }
 
   float lastTime = glfwGetTime();
   while (!glfwWindowShouldClose(window))

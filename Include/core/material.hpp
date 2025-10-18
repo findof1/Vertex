@@ -3,31 +3,23 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
+#include "texture.hpp"
 
-class Material {
+// Basic Material Used by the core module for solid-color objects
+class Material
+{
 public:
     Material() = default;
     virtual ~Material() = default;
 
-    void setColor(const glm::vec3& color) { albedo = color; }
-    
-    // Basic material properties
-    void setAlbedo(const glm::vec3& color) { albedo = color; }
-    void setRoughness(float roughness) { this->roughness = roughness; }
-    void setMetallic(float metallic) { this->metallic = metallic; }
-    void setSpecular(const glm::vec3& specular) { this->specular = specular; }
-    void setShininess(float shininess) { this->shininess = shininess; }
-    
+    void setAlbedo(const glm::vec3 &newAlbedo) { albedo = newAlbedo; }
     glm::vec3 getAlbedo() const { return albedo; }
-    float getRoughness() const { return roughness; }
-    float getMetallic() const { return metallic; }
-    glm::vec3 getSpecular() const { return specular; }
-    float getShininess() const { return shininess; }
+
+    void setTexture(const std::shared_ptr<Texture> &tex) { texture = tex; }
+    std::shared_ptr<Texture> getTexture() const { return texture; }
+    bool hasTexture() const { return texture != nullptr; }
 
 protected:
     glm::vec3 albedo{1.0f, 1.0f, 1.0f};
-    float roughness{0.5f};
-    float metallic{0.0f};
-    glm::vec3 specular{1.0f, 1.0f, 1.0f};
-    float shininess{32.0f};
+    std::shared_ptr<Texture> texture;
 };
