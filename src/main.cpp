@@ -7,7 +7,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "core/camera.hpp"
-#include <vector>
+#include "core/ecs/coordinator.hpp"
+#include "core/components.hpp"
+#include "core/model.hpp"
+#include "core/material.hpp"
+#include "core/render_system.hpp"
 
 std::string loadShaderSource(const char *filepath)
 {
@@ -69,31 +73,6 @@ unsigned int createShaderProgram(const char *vertexPath, const char *fragmentPat
   return program;
 }
 
-std::vector<float> vertices = {
-    -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-    0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-    0.5f, 0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
-    -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
-
-    -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f,
-    0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f,
-    -0.5f, 0.5f, 0.5f, 0.3f, 0.7f, 0.2f};
-
-unsigned int indices[] = {
-    0, 1, 2,
-    2, 3, 0,
-    4, 5, 6,
-    6, 7, 4,
-    0, 1, 5,
-    5, 4, 0,
-    2, 3, 7,
-    7, 6, 2,
-    0, 3, 7,
-    7, 4, 0,
-    1, 2, 6,
-    6, 5, 1};
-
 Camera camera;
 
 float lastX = 800.0f / 2.0f;
@@ -135,12 +114,11 @@ const int HEIGHT = 1200;
 
 int main()
 {
-  if (!glfwInit())
-    return -1;
+  if (!glfwInit()) return -1;
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGL", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Vertex ECS Demo", NULL, NULL);
   if (!window)
   {
     glfwTerminate();
@@ -157,64 +135,58 @@ int main()
   glfwSetCursorPosCallback(window, mouse_callback);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glEnable(GL_DEPTH_TEST);
 
-  unsigned int VAO, VBO, EBO;
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
+  // Initialize ECS
+  auto coordinator = std::make_shared<Coordinator>();
+  coordinator->Init();
 
-  glBindVertexArray(VAO);
+  // Register components
+  coordinator->RegisterComponent<TransformComponent>();
+  coordinator->RegisterComponent<ModelComponent>();
+  coordinator->RegisterComponent<MaterialComponent>();
 
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+  // Register and configure render system
+  auto renderSystem = coordinator->RegisterSystem<RenderSystem>();
+  {
+    Signature signature;
+    signature.set(coordinator->GetComponentType<TransformComponent>());
+    signature.set(coordinator->GetComponentType<ModelComponent>());
+    coordinator->SetSystemSignature<RenderSystem>(signature);
+  }
+  renderSystem->Init(coordinator);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
-
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-
+  // Create shader program
   unsigned int shaderProgram = createShaderProgram(
       "shaders/shader.vert",
       "shaders/shader.frag");
+
+  // Create a cube entity
+  auto cubeModel = Model::createModelFromFile("res/models/cube.obj");
+  Entity cube = coordinator->CreateEntity();
+  TransformComponent cubeTransform{};
+  cubeTransform.translation = {0.0f, 0.0f, -5.0f};
+  cubeTransform.scale = {1.0f, 1.0f, 1.0f};
+  coordinator->AddComponent(cube, cubeTransform);
+  coordinator->AddComponent(cube, ModelComponent{cubeModel});
+  MaterialComponent cubeMat{std::make_shared<Material>()};
+  cubeMat.material->setColor(glm::vec3(0.0f, 1.0f, 0.3f));
+  coordinator->AddComponent(cube, cubeMat);
 
   float lastTime = glfwGetTime();
   while (!glfwWindowShouldClose(window))
   {
     float time = glfwGetTime();
     float dt = time - lastTime;
-    lastTime = glfwGetTime();
+    lastTime = time;
 
     processInput(window, dt);
 
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 proj = camera.getProjectionMatrix((float)WIDTH / (float)HEIGHT);
-    glm::mat4 view = camera.getViewMatrix();
-    {
-      glm::mat4 model = glm::mat4(1.0f);
-      model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-      model = glm::scale(model, glm::vec3(1, 1, 1));
-
-      glUseProgram(shaderProgram);
-      int locModel = glGetUniformLocation(shaderProgram, "model");
-      glUniformMatrix4fv(locModel, 1, GL_FALSE, glm::value_ptr(model));
-
-      int locView = glGetUniformLocation(shaderProgram, "view");
-      glUniformMatrix4fv(locView, 1, GL_FALSE, glm::value_ptr(view));
-
-      int locProjection = glGetUniformLocation(shaderProgram, "projection");
-      glUniformMatrix4fv(locProjection, 1, GL_FALSE, glm::value_ptr(proj));
-
-      glBindVertexArray(VAO);
-      glDrawElements(GL_TRIANGLES, 120, GL_UNSIGNED_INT, 0);
-    }
+    // Update and render using ECS
+    renderSystem->Update(dt, camera, shaderProgram);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
