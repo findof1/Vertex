@@ -65,9 +65,48 @@ void RenderSystem::Update(float deltaTime, const Camera &camera, unsigned int sh
                 glUniform1i(glGetUniformLocation(shaderProgram, "useAlbedoMap"), false);
             }
 
+            // Lighting
+            // This if statement ignores lighting for all entities with a light component
+            if (!gCoordinator->HasComponent<PointLightComponent>(entity))
+            {
+                glUniform1i(glGetUniformLocation(shaderProgram, "ignoreLighting"), false);
+
+                int lightCount = 0;
+                for (auto const &entityLight : mEntities)
+                {
+                    if (!(gCoordinator->HasComponent<PointLightComponent>(entityLight) && gCoordinator->HasComponent<TransformComponent>(entityLight)))
+                        continue;
+
+                    auto &lightTransform = gCoordinator->GetComponent<TransformComponent>(entityLight);
+                    auto &lightComponent = gCoordinator->GetComponent<PointLightComponent>(entityLight);
+
+                    if (lightCount >= 64)
+                        break;
+
+                    std::string base = "pointLights[" + std::to_string(lightCount) + "]";
+
+                    glUniform3fv(glGetUniformLocation(shaderProgram, (base + ".position").c_str()), 1, glm::value_ptr(lightTransform.translation));
+                    glUniform3fv(glGetUniformLocation(shaderProgram, (base + ".color").c_str()), 1, glm::value_ptr(lightComponent.color));
+                    glUniform1f(glGetUniformLocation(shaderProgram, (base + ".intensity").c_str()), lightComponent.intensity);
+                    glUniform1f(glGetUniformLocation(shaderProgram, (base + ".constant").c_str()), lightComponent.constant);
+                    glUniform1f(glGetUniformLocation(shaderProgram, (base + ".linear").c_str()), lightComponent.linear);
+                    glUniform1f(glGetUniformLocation(shaderProgram, (base + ".quadratic").c_str()), lightComponent.quadratic);
+
+                    lightCount++;
+                }
+
+                glUniform1i(glGetUniformLocation(shaderProgram, "numPointLights"), lightCount);
+
+                // Pass camera pos to fragment shader for specular highlights
+                glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(camera.Position));
+            }
+            else
+            {
+                glUniform1i(glGetUniformLocation(shaderProgram, "ignoreLighting"), true);
+            }
+
             // Draw the model
             modelComponent.model->Draw();
-
             // Unbind texture
             if (texture)
                 texture->unbind();

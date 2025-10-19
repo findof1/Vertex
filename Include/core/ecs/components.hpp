@@ -43,3 +43,15 @@ struct MaterialComponent
     MaterialComponent() = default;
     MaterialComponent(std::shared_ptr<Material> m) : material(m) {}
 };
+
+struct PointLightComponent
+{
+    glm::vec3 color = glm::vec3(1.0f);
+    float intensity = 1.0f;
+
+    float constant = 1.0f;
+    float linear = 0.09f;
+    float quadratic = 0.032f;
+
+    PointLightComponent() = default;
+};

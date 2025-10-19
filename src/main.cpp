@@ -151,6 +151,7 @@ int main()
   coordinator->RegisterComponent<TransformComponent>();
   coordinator->RegisterComponent<ModelComponent>();
   coordinator->RegisterComponent<MaterialComponent>();
+  coordinator->RegisterComponent<PointLightComponent>();
 
   // Register and configure render system
   auto renderSystem = coordinator->RegisterSystem<RenderSystem>();
@@ -162,17 +163,22 @@ int main()
   }
   renderSystem->Init(coordinator);
 
-  // Initiate Texture Manager
-  TextureManager textureManager;
-
   // Create shader program
   unsigned int shaderProgram = createShaderProgram(
       "shaders/shader.vert",
       "shaders/shader.frag");
 
+  // Initiate Texture Manager
+  TextureManager textureManager;
+
+  // load assets
+  auto fireTexture = textureManager.load("assets/textures/fire.png");
+  auto cubeModel = Model::createModelFromFile("assets/models/cube.obj");
+  auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj");
+
   // Create a cube entity
   {
-    auto cubeModel = Model::createModelFromFile("assets/models/cube.obj");
+
     Entity cube = coordinator->CreateEntity();
     TransformComponent cubeTransform{};
     cubeTransform.translation = {0.0f, 0.0f, -5.0f};
@@ -181,23 +187,37 @@ int main()
     coordinator->AddComponent(cube, ModelComponent{cubeModel});
     MaterialComponent cubeMat{std::make_shared<Material>()};
     cubeMat.material->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
-    cubeMat.material->setTexture(textureManager.load("assets/textures/fire.png"));
+    cubeMat.material->setTexture(fireTexture);
     coordinator->AddComponent(cube, cubeMat);
   }
 
   // Create a vase entity
   {
-    auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj");
     Entity vase = coordinator->CreateEntity();
     TransformComponent vaseTransform{};
     vaseTransform.translation = {0.0f, 0.0f, 5.0f};
-    vaseTransform.scale = {1.0f, 1.0f, 1.0f};
-    vaseTransform.rotation = {0.0f, 180.0f, 0.0f};
+    vaseTransform.scale = {2.0f, 2.0f, 2.0f};
+    vaseTransform.rotation = {180.0f, 0.0f, 0.0f};
     coordinator->AddComponent(vase, vaseTransform);
     coordinator->AddComponent(vase, ModelComponent{vaseModel});
     MaterialComponent vaseMat{std::make_shared<Material>()};
-    vaseMat.material->setAlbedo(glm::vec3(1.0f, 0.0f, 0.0f));
+    vaseMat.material->setAlbedo(glm::vec3(0.9f, 0.1f, 0.1f));
     coordinator->AddComponent(vase, vaseMat);
+  }
+
+  // Create a point light
+  {
+    Entity light = coordinator->CreateEntity();
+    TransformComponent lightTransform{};
+    lightTransform.translation = {0.0f, 2.0f, 0.0f};
+    lightTransform.scale = {0.25f, 0.25f, 0.25f};
+    lightTransform.rotation = {0.0f, 0.0f, 0.0f};
+    coordinator->AddComponent(light, lightTransform);
+    coordinator->AddComponent(light, ModelComponent{cubeModel});
+    coordinator->AddComponent(light, PointLightComponent{});
+    MaterialComponent lightMat{std::make_shared<Material>()};
+    lightMat.material->setAlbedo(glm::vec3(1.0f, 1.0f, 1.0f));
+    coordinator->AddComponent(light, lightMat);
   }
 
   float lastTime = glfwGetTime();

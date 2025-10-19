@@ -5,11 +5,13 @@
 #include <memory>
 #include <cassert>
 
-class ComponentManager {
+class ComponentManager
+{
 public:
-    template<typename T>
-    void RegisterComponent() {
-        const char* typeName = typeid(T).name();
+    template <typename T>
+    void RegisterComponent()
+    {
+        const char *typeName = typeid(T).name();
 
         assert(mComponentTypes.find(typeName) == mComponentTypes.end() && "Registering component type more than once.");
 
@@ -20,65 +22,67 @@ public:
         ++mNextComponentType;
     }
 
-    template<typename T>
-    ComponentType GetComponentType() {
-        const char* typeName = typeid(T).name();
+    template <typename T>
+    ComponentType GetComponentType()
+    {
+        const char *typeName = typeid(T).name();
 
         assert(mComponentTypes.find(typeName) != mComponentTypes.end() && "Component not registered before use.");
 
         return mComponentTypes[typeName];
     }
 
-    template<typename T>
-    void AddComponent(Entity entity, T component) {
+    template <typename T>
+    void AddComponent(Entity entity, T component)
+    {
         GetComponentArray<T>()->InsertData(entity, component);
     }
 
-    template<typename T>
-    void RemoveComponent(Entity entity) {
+    template <typename T>
+    void RemoveComponent(Entity entity)
+    {
         GetComponentArray<T>()->RemoveData(entity);
     }
 
-    template<typename T>
-    T& GetComponent(Entity entity) {
+    template <typename T>
+    T &GetComponent(Entity entity)
+    {
         return GetComponentArray<T>()->GetData(entity);
     }
 
-    template<typename T>
-    bool HasComponent(Entity entity) {
-        const char* typeName = typeid(T).name();
+    template <typename T>
+    bool HasComponent(Entity entity)
+    {
+        const char *typeName = typeid(T).name();
         auto it = mComponentArrays.find(typeName);
-        if (it == mComponentArrays.end()) {
+        if (it == mComponentArrays.end())
             return false;
-        }
-        try {
-            auto componentArray = std::static_pointer_cast<ComponentArray<T>>(it->second);
-            componentArray->GetData(entity);
-            return true;
-        } catch (...) {
-            return false;
-        }
+
+        auto componentArray = std::static_pointer_cast<ComponentArray<T>>(it->second);
+        return componentArray->HasEntity(entity);
     }
 
-    void EntityDestroyed(Entity entity) {
-        for (auto const& pair : mComponentArrays)
+    void EntityDestroyed(Entity entity)
+    {
+        for (auto const &pair : mComponentArrays)
         {
-            auto const& component = pair.second;
+            auto const &component = pair.second;
 
             component->EntityDestroyed(entity);
         }
     }
 
 private:
-    std::unordered_map<const char*, ComponentType> mComponentTypes{};
+    std::unordered_map<const char *, ComponentType> mComponentTypes{};
 
-    std::unordered_map<const char*, std::shared_ptr<IComponentArray>> mComponentArrays{};
+    std::unordered_map<const char *, std::shared_ptr<IComponentArray>> mComponentArrays{};
 
     ComponentType mNextComponentType{};
 
-    template<typename T>
-    std::shared_ptr<ComponentArray<T>> GetComponentArray() {
-        const char* typeName = typeid(T).name();
+    template <typename T>
+    std::shared_ptr<ComponentArray<T>> GetComponentArray()
+    {
+        const char *typeName = typeid(T).name();
 
         assert(mComponentTypes.find(typeName) != mComponentTypes.end() && "Component not registered before use.");
 

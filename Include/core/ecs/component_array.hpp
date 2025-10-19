@@ -13,7 +13,7 @@ public:
     virtual void EntityDestroyed(Entity entity) = 0;
 };
 
-template<typename T>
+template <typename T>
 class ComponentArray : public IComponentArray
 {
 public:
@@ -49,7 +49,12 @@ public:
         --mSize;
     }
 
-    T& GetData(Entity entity)
+    bool HasEntity(Entity entity) const
+    {
+        return mEntityToIndexMap.find(entity) != mEntityToIndexMap.end();
+    }
+
+    T &GetData(Entity entity)
     {
         assert(mEntityToIndexMap.find(entity) != mEntityToIndexMap.end() && "Retrieving non-existent component.");
 
