@@ -72,7 +72,9 @@ void RenderSystem::Init(std::shared_ptr<Coordinator> coordinator)
 {
     gCoordinator = coordinator;
 
-    shaderProgram = createShaderProgram("shaders/basic_materials/shader.vert", "shaders/basic_materials/shader.frag");
+    shaderProgram = createShaderProgram(
+        "shaders/basic_materials/default_shader.vert",
+        "shaders/basic_materials/default_shader.frag");
 }
 
 void RenderSystem::Update(float deltaTime, const Camera &camera)
