@@ -68,15 +68,26 @@ unsigned int createShaderProgram(const char *vertexPath, const char *fragmentPat
     return program;
 }
 
+unsigned int RenderSystem::GetOrCreateShader(const std::string &vert, const std::string &frag)
+{
+    ShaderKey key{vert, frag};
+    auto it = shaderCache.find(key);
+    if (it != shaderCache.end())
+        return it->second;
+
+    unsigned int program = createShaderProgram(vert.c_str(), frag.c_str());
+    shaderCache[key] = program;
+    return program;
+}
+
 void RenderSystem::Init(std::shared_ptr<Coordinator> coordinator)
 {
     gCoordinator = coordinator;
-
-    shaderProgram = createShaderProgram("shaders/basic_materials/shader.vert", "shaders/basic_materials/shader.frag");
 }
 
 void RenderSystem::Update(float deltaTime, const Camera &camera)
 {
+    unsigned int shaderProgram = GetOrCreateShader("shaders/basic_materials/shader.vert", "shaders/basic_materials/shader.frag");
     glUseProgram(shaderProgram);
 
     // Set view and projection matrices
