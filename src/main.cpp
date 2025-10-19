@@ -14,66 +14,6 @@
 #include "core/ecs/render_system.hpp"
 #include <core/texture_manager.hpp>
 
-std::string loadShaderSource(const char *filepath)
-{
-  std::ifstream file(filepath);
-  if (!file.is_open())
-  {
-    std::cerr << "Failed to open shader file: " << filepath << std::endl;
-    return "";
-  }
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  return buffer.str();
-}
-
-unsigned int compileShader(const char *source, GLenum type)
-{
-  unsigned int shader = glCreateShader(type);
-  glShaderSource(shader, 1, &source, NULL);
-  glCompileShader(shader);
-
-  int success;
-  char infoLog[512];
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-  if (!success)
-  {
-    glGetShaderInfoLog(shader, 512, NULL, infoLog);
-    std::cerr << "Shader compile error:\n"
-              << infoLog << std::endl;
-  }
-  return shader;
-}
-
-unsigned int createShaderProgram(const char *vertexPath, const char *fragmentPath)
-{
-  std::string vSrc = loadShaderSource(vertexPath);
-  std::string fSrc = loadShaderSource(fragmentPath);
-
-  unsigned int vShader = compileShader(vSrc.c_str(), GL_VERTEX_SHADER);
-  unsigned int fShader = compileShader(fSrc.c_str(), GL_FRAGMENT_SHADER);
-
-  unsigned int program = glCreateProgram();
-  glAttachShader(program, vShader);
-  glAttachShader(program, fShader);
-  glLinkProgram(program);
-
-  int success;
-  char infoLog[512];
-  glGetProgramiv(program, GL_LINK_STATUS, &success);
-  if (!success)
-  {
-    glGetProgramInfoLog(program, 512, NULL, infoLog);
-    std::cerr << "Program link error:\n"
-              << infoLog << std::endl;
-  }
-
-  glDeleteShader(vShader);
-  glDeleteShader(fShader);
-
-  return program;
-}
-
 Camera camera;
 
 float lastX = 800.0f / 2.0f;
@@ -163,11 +103,6 @@ int main()
   }
   renderSystem->Init(coordinator);
 
-  // Create shader program
-  unsigned int shaderProgram = createShaderProgram(
-      "shaders/shader.vert",
-      "shaders/shader.frag");
-
   // Initiate Texture Manager
   TextureManager textureManager;
 
@@ -233,7 +168,7 @@ int main()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Update and render using ECS
-    renderSystem->Update(dt, camera, shaderProgram);
+    renderSystem->Update(dt, camera);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

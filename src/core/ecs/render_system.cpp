@@ -4,13 +4,78 @@
 #include <glad.h>
 #include <glm/gtc/type_ptr.hpp>
 #include "core/texture.hpp"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
+std::string loadShaderSource(const char *filepath)
+{
+    std::ifstream file(filepath);
+    if (!file.is_open())
+    {
+        std::cerr << "Failed to open shader file: " << filepath << std::endl;
+        return "";
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
+unsigned int compileShader(const char *source, GLenum type)
+{
+    unsigned int shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    int success;
+    char infoLog[512];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        std::cerr << "Shader compile error:\n"
+                  << infoLog << std::endl;
+    }
+    return shader;
+}
+
+unsigned int createShaderProgram(const char *vertexPath, const char *fragmentPath)
+{
+    std::string vSrc = loadShaderSource(vertexPath);
+    std::string fSrc = loadShaderSource(fragmentPath);
+
+    unsigned int vShader = compileShader(vSrc.c_str(), GL_VERTEX_SHADER);
+    unsigned int fShader = compileShader(fSrc.c_str(), GL_FRAGMENT_SHADER);
+
+    unsigned int program = glCreateProgram();
+    glAttachShader(program, vShader);
+    glAttachShader(program, fShader);
+    glLinkProgram(program);
+
+    int success;
+    char infoLog[512];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        std::cerr << "Program link error:\n"
+                  << infoLog << std::endl;
+    }
+
+    glDeleteShader(vShader);
+    glDeleteShader(fShader);
+
+    return program;
+}
 
 void RenderSystem::Init(std::shared_ptr<Coordinator> coordinator)
 {
     gCoordinator = coordinator;
+
+    shaderProgram = createShaderProgram("shaders/basic_materials/shader.vert", "shaders/basic_materials/shader.frag");
 }
 
-void RenderSystem::Update(float deltaTime, const Camera &camera, unsigned int shaderProgram)
+void RenderSystem::Update(float deltaTime, const Camera &camera)
 {
     glUseProgram(shaderProgram);
 
