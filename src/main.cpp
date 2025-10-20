@@ -49,9 +49,9 @@ void processInput(GLFWwindow *window, float deltaTime)
     camera.processKeyboard(LEFT, deltaTime);
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     camera.processKeyboard(RIGHT, deltaTime);
-  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
     camera.processKeyboard(UP, deltaTime);
-  if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
     camera.processKeyboard(DOWN, deltaTime);
 }
 
