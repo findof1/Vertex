@@ -5,6 +5,20 @@
 #include "components.hpp"
 #include "../camera.hpp"
 #include <memory>
+#include <utility>
+class RenderSystem;
+
+class RenderModule
+{
+public:
+    virtual ~RenderModule() = default;
+
+    virtual std::pair<std::string, std::string> GetShaders(RenderSystem *renderSystem, Entity e) const = 0;
+
+    virtual void UploadUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity entity) {}
+
+    virtual void DrawObject(RenderSystem *renderSystem, Entity e) {};
+};
 
 struct ShaderKey
 {
@@ -28,12 +42,12 @@ class RenderSystem : public System
 {
 public:
     std::unordered_map<ShaderKey, unsigned int, ShaderKeyHash> shaderCache;
+    std::shared_ptr<Coordinator> gCoordinator;
+    std::vector<std::unique_ptr<RenderModule>> modules;
 
     unsigned int GetOrCreateShader(const std::string &vert, const std::string &frag);
 
+    void AddModule(std::unique_ptr<RenderModule> module);
     void Init(std::shared_ptr<Coordinator> coordinator);
     void Update(float deltaTime, const Camera &camera);
-
-private:
-    std::shared_ptr<Coordinator> gCoordinator;
 };

@@ -85,9 +85,61 @@ void RenderSystem::Init(std::shared_ptr<Coordinator> coordinator)
     gCoordinator = coordinator;
 }
 
+void RenderSystem::AddModule(std::unique_ptr<RenderModule> module)
+{
+    for (const auto &m : modules)
+    {
+        if (typeid(*m) == typeid(*module))
+            return;
+    }
+
+    modules.push_back(std::move(module));
+}
+
 void RenderSystem::Update(float deltaTime, const Camera &camera)
 {
-    unsigned int shaderProgram = GetOrCreateShader("shaders/basic_materials/shader.vert", "shaders/basic_materials/shader.frag");
+
+    for (auto const &entity : mEntities)
+    {
+        std::string vertexPath, fragmentPath;
+
+        for (auto &module : modules)
+        {
+            auto [vert, frag] = module->GetShaders(this, entity);
+            if (!vert.empty())
+                vertexPath = vert;
+            if (!frag.empty())
+                fragmentPath = frag;
+        }
+
+        unsigned int program = GetOrCreateShader(vertexPath, fragmentPath);
+        glUseProgram(program);
+
+        for (auto &module : modules)
+        {
+            module->UploadUniforms(program, this, camera, entity);
+        }
+
+        for (auto &module : modules)
+        {
+            module->DrawObject(this, entity);
+        }
+
+        int maxUnits = 0;
+        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxUnits);
+        for (int i = 0; i < maxUnits; ++i)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+        glActiveTexture(GL_TEXTURE0);
+    }
+}
+
+/*
+void RenderSystem::Update(float deltaTime, const Camera &camera)
+{
+    unsigned int shaderProgram = GetOrCreateShader("shaders/basic_materials/default_shader.vert", "shaders/basic_materials/default_shader.frag");
     glUseProgram(shaderProgram);
 
     // Set view and projection matrices
@@ -188,4 +240,4 @@ void RenderSystem::Update(float deltaTime, const Camera &camera)
                 texture->unbind();
         }
     }
-}
+}*/

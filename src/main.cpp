@@ -13,6 +13,7 @@
 #include "core/material.hpp"
 #include "core/ecs/render_system.hpp"
 #include <core/texture_manager.hpp>
+#include <core/ecs/core_render_module.hpp>
 
 Camera camera;
 
@@ -102,6 +103,8 @@ int main()
     coordinator->SetSystemSignature<RenderSystem>(signature);
   }
   renderSystem->Init(coordinator);
+  renderSystem->AddModule(std::make_unique<CoreObjectModule>());
+  renderSystem->AddModule(std::make_unique<CoreLightingModule>());
 
   // Initiate Texture Manager
   TextureManager textureManager;
