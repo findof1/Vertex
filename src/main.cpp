@@ -137,8 +137,8 @@ int main()
   {
     Entity vase = coordinator->CreateEntity();
     TransformComponent vaseTransform{};
-    vaseTransform.translation = {0.0f, 0.0f, 5.0f};
-    vaseTransform.scale = {2.0f, 2.0f, 2.0f};
+    vaseTransform.translation = {0.0f, -1.0f, 5.0f};
+    vaseTransform.scale = {7.0f, 7.0f, 7.0f};
     vaseTransform.rotation = {180.0f, 0.0f, 0.0f};
     coordinator->AddComponent(vase, vaseTransform);
     coordinator->AddComponent(vase, ModelComponent{vaseModel});
