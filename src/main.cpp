@@ -14,6 +14,9 @@
 #include "core/ecs/render_system.hpp"
 #include <core/texture_manager.hpp>
 #include <core/ecs/core_render_module.hpp>
+#include "pbr/pbr_material.hpp"
+#include "pbr/components.hpp"
+#include "pbr/pbr_render_module.hpp"
 
 Camera camera;
 
@@ -93,18 +96,19 @@ int main()
   coordinator->RegisterComponent<ModelComponent>();
   coordinator->RegisterComponent<MaterialComponent>();
   coordinator->RegisterComponent<PointLightComponent>();
+  coordinator->RegisterComponent<PBRMaterialComponent>();
 
   // Register and configure render system
   auto renderSystem = coordinator->RegisterSystem<RenderSystem>();
   {
     Signature signature;
     signature.set(coordinator->GetComponentType<TransformComponent>());
-    signature.set(coordinator->GetComponentType<ModelComponent>());
     coordinator->SetSystemSignature<RenderSystem>(signature);
   }
   renderSystem->Init(coordinator);
   renderSystem->AddModule(std::make_unique<CoreObjectModule>());
   renderSystem->AddModule(std::make_unique<CoreLightingModule>());
+  renderSystem->AddModule(std::make_unique<PBRLightingModule>());
 
   // Initiate Texture Manager
   TextureManager textureManager;
@@ -123,9 +127,9 @@ int main()
     cubeTransform.scale = {1.0f, 1.0f, 1.0f};
     coordinator->AddComponent(cube, cubeTransform);
     coordinator->AddComponent(cube, ModelComponent{cubeModel});
-    MaterialComponent cubeMat{std::make_shared<Material>()};
+    PBRMaterialComponent cubeMat{std::make_shared<PBRMaterial>()};
     cubeMat.material->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
-    cubeMat.material->setTexture(fireTexture);
+    cubeMat.material->setAlbedoMap(fireTexture);
     coordinator->AddComponent(cube, cubeMat);
   }
 
@@ -138,7 +142,7 @@ int main()
     vaseTransform.rotation = {180.0f, 0.0f, 0.0f};
     coordinator->AddComponent(vase, vaseTransform);
     coordinator->AddComponent(vase, ModelComponent{vaseModel});
-    MaterialComponent vaseMat{std::make_shared<Material>()};
+    PBRMaterialComponent vaseMat{std::make_shared<PBRMaterial>()};
     vaseMat.material->setAlbedo(glm::vec3(0.9f, 0.1f, 0.1f));
     coordinator->AddComponent(vase, vaseMat);
   }
@@ -153,7 +157,7 @@ int main()
     coordinator->AddComponent(light, lightTransform);
     coordinator->AddComponent(light, ModelComponent{cubeModel});
     coordinator->AddComponent(light, PointLightComponent{});
-    MaterialComponent lightMat{std::make_shared<Material>()};
+    PBRMaterialComponent lightMat{std::make_shared<PBRMaterial>()};
     lightMat.material->setAlbedo(glm::vec3(1.0f, 1.0f, 1.0f));
     coordinator->AddComponent(light, lightMat);
   }

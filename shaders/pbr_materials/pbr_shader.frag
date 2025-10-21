@@ -28,6 +28,8 @@ uniform float ao;
 uniform sampler2D albedoMap;
 uniform bool useAlbedoMap;
 
+uniform bool ignoreLighting;
+
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
 uniform int numPointLights;
 
@@ -65,6 +67,7 @@ void main()
     if (useAlbedoMap)
         albedo = pow(texture(albedoMap, TexCoords).rgb, vec3(2.2)); // sRGB to linear
 
+if(!ignoreLighting){
     vec3 N = normalize(Normal);
     vec3 V = normalize(viewPos - FragPos);
 
@@ -100,7 +103,7 @@ void main()
     }
 
     // Ambient lighting
-    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 ambient = vec3(0.1) * albedo * ao;
 
     vec3 color = ambient + Lo;
 
@@ -109,4 +112,7 @@ void main()
     color = pow(color, vec3(1.0 / 2.2)); // linear to gamma
 
     FragColor = vec4(color, 1.0);
+    }else{
+        FragColor = vec4(albedo, 1.0);
+    }
 }
