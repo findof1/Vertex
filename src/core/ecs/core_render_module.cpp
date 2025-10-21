@@ -102,6 +102,7 @@ void CoreObjectModule::UploadUniforms(unsigned int program, RenderSystem *render
 
   glm::mat4 view = camera.getViewMatrix();
   glm::mat4 proj = camera.getProjectionMatrix(16.0f / 12.0f);
+
   glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
   glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
 

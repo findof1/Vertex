@@ -142,7 +142,7 @@ int main()
     vaseTransform.rotation = {180.0f, 0.0f, 0.0f};
     coordinator->AddComponent(vase, vaseTransform);
     coordinator->AddComponent(vase, ModelComponent{vaseModel});
-    PBRMaterialComponent vaseMat{std::make_shared<PBRMaterial>()};
+    MaterialComponent vaseMat{std::make_shared<Material>()};
     vaseMat.material->setAlbedo(glm::vec3(0.9f, 0.1f, 0.1f));
     coordinator->AddComponent(vase, vaseMat);
   }
