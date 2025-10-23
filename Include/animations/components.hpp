@@ -8,6 +8,7 @@
 
 // Forward declarations
 class AnimatedModel;
+class Animation;
 
 struct AnimatedModelComponent
 {
@@ -15,4 +16,15 @@ struct AnimatedModelComponent
 
     AnimatedModelComponent() = default;
     AnimatedModelComponent(std::shared_ptr<AnimatedModel> m) : model(m) {}
+};
+
+struct AnimationComponent
+{
+    std::shared_ptr<Animation> animation;
+    float currentTime = 0.0f;
+    bool playing = true;
+
+    AnimationComponent() = default;
+    AnimationComponent(std::shared_ptr<Animation> anim)
+        : animation(anim) {}
 };

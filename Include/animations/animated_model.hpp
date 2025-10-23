@@ -18,7 +18,12 @@ struct BoneInfo
 class AnimatedModel
 {
 public:
-    AnimatedModel() = default;
+    AnimatedModel()
+    {
+        defaultBoneMatrices.resize(100, glm::mat4(1.0f));
+        finalBoneMatrices = std::make_shared<std::vector<glm::mat4>>(defaultBoneMatrices);
+    }
+
     ~AnimatedModel() = default;
 
     static std::shared_ptr<AnimatedModel> createModelFromFile(const std::string &path, bool loadMaterials = true);
@@ -31,10 +36,22 @@ public:
     int boneCount = 0;
 
     std::vector<BoneInfo> boneInfo;
-    std::vector<glm::mat4> finalBoneMatrices = std::vector<glm::mat4>(100, glm::mat4(1.0f));
+    std::vector<glm::mat4> defaultBoneMatrices;
+    std::shared_ptr<std::vector<glm::mat4>> finalBoneMatrices;
+
+    void BindAnimation(const std::shared_ptr<std::vector<glm::mat4>> &animationMatrices)
+    {
+        finalBoneMatrices = animationMatrices;
+    }
+
+    void UnbindAnimation()
+    {
+        finalBoneMatrices = std::make_shared<std::vector<glm::mat4>>(defaultBoneMatrices);
+    }
+
     const std::vector<glm::mat4> &GetFinalBoneMatrices() const
     {
-        return finalBoneMatrices;
+        return *finalBoneMatrices;
     }
 
 private:

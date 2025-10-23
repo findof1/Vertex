@@ -28,6 +28,7 @@ void AnimationsObjectModule::UploadObjectUniforms(unsigned int program, RenderSy
   auto &animatedModel = *animModelComp.model;
 
   const std::vector<glm::mat4> &boneMatrices = animatedModel.GetFinalBoneMatrices();
+
   for (size_t i = 0; i < boneMatrices.size() && i < 100; ++i)
   {
     std::string name = "boneMatrices[" + std::to_string(i) + "]";

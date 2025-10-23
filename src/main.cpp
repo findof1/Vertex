@@ -20,6 +20,8 @@
 #include <animations/components.hpp>
 #include <animations/animations_render_module.hpp>
 #include "animations/animated_model.hpp"
+#include "animations/animations_system.hpp"
+#include "animations/animation.hpp"
 
 Camera camera;
 
@@ -101,6 +103,17 @@ int main()
   coordinator->RegisterComponent<PointLightComponent>();
   coordinator->RegisterComponent<PBRMaterialComponent>();
   coordinator->RegisterComponent<AnimatedModelComponent>();
+  coordinator->RegisterComponent<AnimationComponent>();
+
+  // Register and configure animations system
+  auto animationsSystem = coordinator->RegisterSystem<AnimationsSystem>();
+  {
+    Signature signature;
+    signature.set(coordinator->GetComponentType<AnimationComponent>());
+    signature.set(coordinator->GetComponentType<AnimatedModelComponent>());
+    coordinator->SetSystemSignature<AnimationsSystem>(signature);
+  }
+  animationsSystem->Init(coordinator);
 
   // Register and configure render system
   auto renderSystem = coordinator->RegisterSystem<RenderSystem>();
@@ -123,6 +136,7 @@ int main()
   auto manTextures = Material::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manTexturesPBR = PBRMaterial::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manModel = AnimatedModel::createModelFromFile("assets/models/animationMan/man.gltf");
+  std::shared_ptr<Animation> manAnimation = std::make_shared<Animation>("assets/models/animationMan/man.gltf", manModel->boneMapping);
   auto cubeModel = Model::createModelFromFile("assets/models/cube.obj", false);
   auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj", false);
 
@@ -166,6 +180,9 @@ int main()
     PBRMaterialComponent manMat;
     manMat.materials = manTexturesPBR;
     coordinator->AddComponent(man, manMat);
+    AnimationComponent anim;
+    anim.animation = manAnimation;
+    coordinator->AddComponent(man, anim);
   }
 
   // Create a vase entity
@@ -208,6 +225,9 @@ int main()
 
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Update animations before rendering
+    animationsSystem->Update(dt, camera);
 
     // Update and render using ECS
     renderSystem->Update(dt, camera);
