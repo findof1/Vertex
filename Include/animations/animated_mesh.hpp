@@ -17,6 +17,7 @@ struct AnimatedVertex
 class AnimatedMesh
 {
 public:
+    int textureID = -1;
     AnimatedMesh(std::vector<AnimatedVertex> vertices, std::vector<unsigned int> indices);
     ~AnimatedMesh();
 

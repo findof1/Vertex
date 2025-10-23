@@ -15,9 +15,13 @@ public:
 
     virtual std::pair<std::string, std::string> GetShaders(RenderSystem *renderSystem, Entity e) const = 0;
 
-    virtual void UploadUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity entity) {}
+    // once an object
+    virtual void UploadObjectUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity entity) {}
 
-    virtual void DrawObject(RenderSystem *renderSystem, Entity e) {};
+    // once a mesh (multiple times an object)
+    virtual void UploadMeshUniforms(unsigned int program, RenderSystem *renderSystem, Entity entity, int materialID) {}
+
+    virtual void DrawObject(unsigned int program, RenderSystem *renderSystem, Entity e) {};
 };
 
 struct ShaderKey

@@ -38,10 +38,10 @@ struct ModelComponent
 
 struct MaterialComponent
 {
-    std::shared_ptr<Material> material;
+    std::vector<std::shared_ptr<Material>> materials;
 
     MaterialComponent() = default;
-    MaterialComponent(std::shared_ptr<Material> m) : material(m) {}
+    MaterialComponent(std::shared_ptr<Material> m) { materials.push_back(m); }
 };
 
 struct PointLightComponent

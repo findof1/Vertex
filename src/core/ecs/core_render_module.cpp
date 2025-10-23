@@ -11,40 +11,13 @@ std::pair<std::string, std::string> CoreLightingModule::GetShaders(RenderSystem 
   return {"", "shaders/basic_materials/default_shader.frag"};
 }
 
-void CoreLightingModule::UploadUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e)
+void CoreLightingModule::UploadObjectUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e)
 {
   if (!renderSystem->gCoordinator->HasComponent<MaterialComponent>(e))
   {
     return;
   }
   glUniform3fv(glGetUniformLocation(program, "viewPos"), 1, glm::value_ptr(camera.Position));
-
-  glm::vec3 albedo(1.0f, 1.0f, 1.0f);
-  std::shared_ptr<Texture> texture = nullptr;
-
-  auto &materialComponent = renderSystem->gCoordinator->GetComponent<MaterialComponent>(e);
-  if (materialComponent.material)
-  {
-    albedo = materialComponent.material->getAlbedo();
-
-    if (materialComponent.material->hasTexture())
-      texture = materialComponent.material->getTexture();
-  }
-
-  glUniform3fv(glGetUniformLocation(program, "materialAlbedo"), 1, glm::value_ptr(albedo));
-
-  // Bind the texture
-  if (texture)
-  {
-    unsigned int slot = 0; // Use slot 0 for base textures
-    texture->bind(slot);
-    glUniform1i(glGetUniformLocation(program, "albedoMap"), slot);
-    glUniform1i(glGetUniformLocation(program, "useAlbedoMap"), true);
-  }
-  else
-  {
-    glUniform1i(glGetUniformLocation(program, "useAlbedoMap"), false);
-  }
 
   // Lighting
   // This if statement ignores lighting for all entities with a point light component
@@ -84,6 +57,58 @@ void CoreLightingModule::UploadUniforms(unsigned int program, RenderSystem *rend
   }
 }
 
+void CoreLightingModule::UploadMeshUniforms(unsigned int program, RenderSystem *renderSystem, Entity e, int materialID)
+{
+  if (!renderSystem->gCoordinator->HasComponent<MaterialComponent>(e))
+  {
+    return;
+  }
+
+  glm::vec3 albedo(1.0f, 1.0f, 1.0f);
+  std::shared_ptr<Texture> texture = nullptr;
+
+  auto &materialComponent = renderSystem->gCoordinator->GetComponent<MaterialComponent>(e);
+  std::shared_ptr<Material> material = nullptr;
+  if (materialID == -1 && !materialComponent.materials.empty())
+  {
+    material = materialComponent.materials.at(0);
+  }
+  else
+  {
+    for (const auto &mat : materialComponent.materials)
+    {
+      if (mat->id == materialID)
+      {
+        material = mat;
+        break;
+      }
+    }
+  }
+
+  if (material)
+  {
+    albedo = material->getAlbedo();
+
+    if (material->hasTexture())
+      texture = material->getTexture();
+  }
+
+  glUniform3fv(glGetUniformLocation(program, "materialAlbedo"), 1, glm::value_ptr(albedo));
+
+  // Bind the texture
+  if (texture)
+  {
+    unsigned int slot = 0; // Use slot 0 for base textures
+    texture->bind(slot);
+    glUniform1i(glGetUniformLocation(program, "albedoMap"), slot);
+    glUniform1i(glGetUniformLocation(program, "useAlbedoMap"), true);
+  }
+  else
+  {
+    glUniform1i(glGetUniformLocation(program, "useAlbedoMap"), false);
+  }
+}
+
 std::pair<std::string, std::string> CoreObjectModule::GetShaders(RenderSystem *renderSystem, Entity e) const
 {
   if (!renderSystem->gCoordinator->HasComponent<ModelComponent>(e))
@@ -93,7 +118,7 @@ std::pair<std::string, std::string> CoreObjectModule::GetShaders(RenderSystem *r
   return {"shaders/basic_materials/default_shader.vert", ""};
 }
 
-void CoreObjectModule::UploadUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e)
+void CoreObjectModule::UploadObjectUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e)
 {
   if (!renderSystem->gCoordinator->HasComponent<ModelComponent>(e))
   {
@@ -118,11 +143,19 @@ void CoreObjectModule::UploadUniforms(unsigned int program, RenderSystem *render
   glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 }
 
-void CoreObjectModule::DrawObject(RenderSystem *renderSystem, Entity e)
+void CoreObjectModule::DrawObject(unsigned int program, RenderSystem *renderSystem, Entity e)
 {
   if (!renderSystem->gCoordinator->HasComponent<ModelComponent>(e))
   {
     return;
   }
-  renderSystem->gCoordinator->GetComponent<ModelComponent>(e).model->Draw();
+
+  for (const auto &mesh : renderSystem->gCoordinator->GetComponent<ModelComponent>(e).model->meshes)
+  {
+    for (auto &module : renderSystem->modules)
+    {
+      module->UploadMeshUniforms(program, renderSystem, e, mesh->textureID);
+    }
+    mesh->Draw();
+  }
 }

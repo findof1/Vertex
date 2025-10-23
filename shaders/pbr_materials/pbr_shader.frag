@@ -64,8 +64,13 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
 void main()
 {
     vec3 albedo = materialAlbedo;
-    if (useAlbedoMap)
-        albedo = pow(texture(albedoMap, TexCoords).rgb, vec3(2.2)); // sRGB to linear
+    if (useAlbedoMap){
+        vec4 textureColor = texture(albedoMap, TexCoords);
+        if(textureColor.a < 0.05){
+            discard;
+        }
+        albedo = pow(textureColor.rgb, vec3(2.2)); // sRGB to linear
+    }
 
 if(!ignoreLighting){
     vec3 N = normalize(Normal);

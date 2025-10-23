@@ -11,7 +11,7 @@ std::pair<std::string, std::string> AnimationsObjectModule::GetShaders(RenderSys
   return {"shaders/animated_meshes/animated_shader.vert", ""};
 }
 
-void AnimationsObjectModule::UploadUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e)
+void AnimationsObjectModule::UploadObjectUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e)
 {
   if (!renderSystem->gCoordinator->HasComponent<AnimatedModelComponent>(e))
   {
@@ -46,11 +46,18 @@ void AnimationsObjectModule::UploadUniforms(unsigned int program, RenderSystem *
   glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 }
 
-void AnimationsObjectModule::DrawObject(RenderSystem *renderSystem, Entity e)
+void AnimationsObjectModule::DrawObject(unsigned int program, RenderSystem *renderSystem, Entity e)
 {
   if (!renderSystem->gCoordinator->HasComponent<AnimatedModelComponent>(e))
   {
     return;
   }
-  renderSystem->gCoordinator->GetComponent<AnimatedModelComponent>(e).model->Draw();
+  for (const auto &mesh : renderSystem->gCoordinator->GetComponent<AnimatedModelComponent>(e).model->meshes)
+  {
+    for (auto &module : renderSystem->modules)
+    {
+      module->UploadMeshUniforms(program, renderSystem, e, mesh->textureID);
+    }
+    mesh->Draw();
+  }
 }

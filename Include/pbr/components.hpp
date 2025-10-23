@@ -11,8 +11,8 @@ class PBRMaterial;
 
 struct PBRMaterialComponent
 {
-    std::shared_ptr<PBRMaterial> material;
+    std::vector<std::shared_ptr<PBRMaterial>> materials;
 
     PBRMaterialComponent() = default;
-    PBRMaterialComponent(std::shared_ptr<PBRMaterial> m) : material(m) {}
+    PBRMaterialComponent(std::shared_ptr<PBRMaterial> m) { materials.push_back(m); }
 };

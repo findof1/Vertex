@@ -4,11 +4,18 @@
 #include <memory>
 #include <string>
 #include "core/texture.hpp"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <vector>
+
+class TextureManager;
 
 // PBR Material Used by the PBR module for objects rendered with PBR
 class PBRMaterial
 {
 public:
+    int id;
     PBRMaterial() = default;
     virtual ~PBRMaterial() = default;
 
@@ -27,6 +34,8 @@ public:
     void setAlbedoMap(const std::shared_ptr<Texture> &albedoMap) { this->albedoMap = albedoMap; }
     std::shared_ptr<Texture> getAlbedoMap() const { return albedoMap; }
     bool hasAlbedoMap() const { return albedoMap != nullptr; }
+
+    static std::vector<std::shared_ptr<PBRMaterial>> createModelMaterialsFromFile(TextureManager *textureManager, const std::string &path);
 
 protected:
     glm::vec3 albedo{1.0f, 1.0f, 1.0f};

@@ -120,10 +120,11 @@ int main()
 
   // load assets
   auto fireTexture = textureManager.load("assets/textures/fire.png");
-  auto manTexture = textureManager.load("assets/models/animationMan/Ch31_1001_Diffuse.png");
+  auto manTextures = Material::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
+  auto manTexturesPBR = PBRMaterial::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manModel = AnimatedModel::createModelFromFile("assets/models/animationMan/man.gltf");
-  auto cubeModel = Model::createModelFromFile("assets/models/cube.obj");
-  auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj");
+  auto cubeModel = Model::createModelFromFile("assets/models/cube.obj", false);
+  auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj", false);
 
   // Create a cube entity
   {
@@ -134,22 +135,36 @@ int main()
     coordinator->AddComponent(cube, cubeTransform);
     coordinator->AddComponent(cube, ModelComponent{cubeModel});
     PBRMaterialComponent cubeMat{std::make_shared<PBRMaterial>()};
-    cubeMat.material->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
-    cubeMat.material->setAlbedoMap(fireTexture);
+    cubeMat.materials.at(0)->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
+    cubeMat.materials.at(0)->setAlbedoMap(fireTexture);
     coordinator->AddComponent(cube, cubeMat);
   }
 
-  // Create a man entity
+  // Create a phong man entity
   {
     Entity man = coordinator->CreateEntity();
     TransformComponent manTransform{};
-    manTransform.translation = {5.0f, 0.0f, 0.0f};
+    manTransform.translation = {3.0f, 0.0f, 0.0f};
     manTransform.scale = {1.0f, 1.0f, 1.0f};
+    manTransform.rotation = {0.0f, -90.0f, 0.0f};
     coordinator->AddComponent(man, manTransform);
     coordinator->AddComponent(man, AnimatedModelComponent{manModel});
-    PBRMaterialComponent manMat{std::make_shared<PBRMaterial>()};
-    manMat.material->setAlbedo(glm::vec3(1.0f, 1.0f, 1.0f));
-    manMat.material->setAlbedoMap(manTexture);
+    MaterialComponent manMat;
+    manMat.materials = manTextures;
+    coordinator->AddComponent(man, manMat);
+  }
+
+  // Create a pbr man entity
+  {
+    Entity man = coordinator->CreateEntity();
+    TransformComponent manTransform{};
+    manTransform.translation = {-3.0f, 0.0f, 0.0f};
+    manTransform.scale = {1.0f, 1.0f, 1.0f};
+    manTransform.rotation = {0.0f, 90.0f, 0.0f};
+    coordinator->AddComponent(man, manTransform);
+    coordinator->AddComponent(man, AnimatedModelComponent{manModel});
+    PBRMaterialComponent manMat;
+    manMat.materials = manTexturesPBR;
     coordinator->AddComponent(man, manMat);
   }
 
@@ -163,7 +178,7 @@ int main()
     coordinator->AddComponent(vase, vaseTransform);
     coordinator->AddComponent(vase, ModelComponent{vaseModel});
     MaterialComponent vaseMat{std::make_shared<Material>()};
-    vaseMat.material->setAlbedo(glm::vec3(0.9f, 0.1f, 0.1f));
+    vaseMat.materials.at(0)->setAlbedo(glm::vec3(0.9f, 0.1f, 0.1f));
     coordinator->AddComponent(vase, vaseMat);
   }
 
@@ -178,7 +193,7 @@ int main()
     coordinator->AddComponent(light, ModelComponent{cubeModel});
     coordinator->AddComponent(light, PointLightComponent{});
     PBRMaterialComponent lightMat{std::make_shared<PBRMaterial>()};
-    lightMat.material->setAlbedo(glm::vec3(1.0f, 1.0f, 1.0f));
+    lightMat.materials.at(0)->setAlbedo(glm::vec3(1.0f, 1.0f, 1.0f));
     coordinator->AddComponent(light, lightMat);
   }
 

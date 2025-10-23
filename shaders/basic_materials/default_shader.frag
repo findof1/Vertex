@@ -27,8 +27,13 @@ uniform int numPointLights;
 
 void main() {
     vec3 albedo = materialAlbedo;
-    if (useAlbedoMap)
-        albedo = texture(albedoMap, TexCoords).rgb;
+    if (useAlbedoMap){
+        vec4 textureColor = texture(albedoMap, TexCoords);
+        if(textureColor.a < 0.05){
+            discard;
+        }
+        albedo = textureColor.rbg;
+    }
 
     if(!ignoreLighting){
     vec3 norm = normalize(Normal);

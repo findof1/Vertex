@@ -122,12 +122,12 @@ void RenderSystem::Update(float deltaTime, const Camera &camera)
 
         for (auto &module : modules)
         {
-            module->UploadUniforms(program, this, camera, entity);
+            module->UploadObjectUniforms(program, this, camera, entity);
         }
 
         for (auto &module : modules)
         {
-            module->DrawObject(this, entity);
+            module->DrawObject(program, this, entity);
         }
 
         int maxUnits = 0;

@@ -1,14 +1,14 @@
 #include "core/model.hpp"
 #include <iostream>
 
-std::shared_ptr<Model> Model::createModelFromFile(const std::string &path)
+std::shared_ptr<Model> Model::createModelFromFile(const std::string &path, bool loadMaterials)
 {
     auto model = std::make_shared<Model>();
-    model->loadModel(path);
+    model->loadModel(path, loadMaterials);
     return model;
 }
 
-void Model::loadModel(const std::string &path)
+void Model::loadModel(const std::string &path, bool loadMaterials)
 {
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenNormals);
@@ -20,29 +20,34 @@ void Model::loadModel(const std::string &path)
     }
 
     directory = path.substr(0, path.find_last_of('/'));
-    processNode(scene->mRootNode, scene);
+    processNode(scene->mRootNode, scene, loadMaterials);
 }
 
-void Model::processNode(aiNode *node, const aiScene *scene)
+void Model::processNode(aiNode *node, const aiScene *scene, bool loadMaterials)
 {
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(processMesh(mesh, scene));
+        meshes.push_back(processMesh(mesh, scene, loadMaterials));
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        processNode(node->mChildren[i], scene);
+        processNode(node->mChildren[i], scene, loadMaterials);
     }
 }
 
-std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene)
+std::unique_ptr<Mesh> Model::processMesh(aiMesh *mesh, const aiScene *scene, bool loadMaterials)
 {
     std::vector<Vertex> vertices = loadVertices(mesh);
     std::vector<unsigned int> indices = loadIndices(mesh);
 
-    return std::make_unique<Mesh>(vertices, indices);
+    auto finalMesh = std::make_unique<Mesh>(vertices, indices);
+    if (loadMaterials)
+    {
+        finalMesh->textureID = mesh->mMaterialIndex;
+    }
+    return finalMesh;
 }
 
 std::vector<Vertex> Model::loadVertices(aiMesh *mesh)

@@ -1,14 +1,14 @@
 #include "animations/animated_model.hpp"
 #include <iostream>
 
-std::shared_ptr<AnimatedModel> AnimatedModel::createModelFromFile(const std::string &path)
+std::shared_ptr<AnimatedModel> AnimatedModel::createModelFromFile(const std::string &path, bool loadMaterials)
 {
     auto model = std::make_shared<AnimatedModel>();
-    model->loadModel(path);
+    model->loadModel(path, loadMaterials);
     return model;
 }
 
-void AnimatedModel::loadModel(const std::string &path)
+void AnimatedModel::loadModel(const std::string &path, bool loadMaterials)
 {
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenNormals);
@@ -20,31 +20,36 @@ void AnimatedModel::loadModel(const std::string &path)
     }
 
     directory = path.substr(0, path.find_last_of('/'));
-    processNode(scene->mRootNode, scene);
+    processNode(scene->mRootNode, scene, loadMaterials);
 }
 
-void AnimatedModel::processNode(aiNode *node, const aiScene *scene)
+void AnimatedModel::processNode(aiNode *node, const aiScene *scene, bool loadMaterials)
 {
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(processMesh(mesh, scene));
+        meshes.push_back(processMesh(mesh, scene, loadMaterials));
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        processNode(node->mChildren[i], scene);
+        processNode(node->mChildren[i], scene, loadMaterials);
     }
 }
 
-std::unique_ptr<AnimatedMesh> AnimatedModel::processMesh(aiMesh *mesh, const aiScene *scene)
+std::unique_ptr<AnimatedMesh> AnimatedModel::processMesh(aiMesh *mesh, const aiScene *scene, bool loadMaterials)
 {
     std::vector<AnimatedVertex> vertices = loadVertices(mesh);
     std::vector<unsigned int> indices = loadIndices(mesh);
 
     loadBones(mesh, vertices);
 
-    return std::make_unique<AnimatedMesh>(vertices, indices);
+    auto animatedMesh = std::make_unique<AnimatedMesh>(vertices, indices);
+    if (loadMaterials)
+    {
+        animatedMesh->textureID = mesh->mMaterialIndex;
+    }
+    return animatedMesh;
 }
 
 glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4 &from)

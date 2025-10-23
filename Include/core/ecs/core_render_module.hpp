@@ -13,9 +13,11 @@ class CoreLightingModule : public RenderModule
 public:
   std::pair<std::string, std::string> GetShaders(RenderSystem *renderSystem, Entity e) const;
 
-  void UploadUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e) override;
+  void UploadObjectUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e) override;
 
-  void DrawObject(RenderSystem *renderSystem, Entity e) override
+  void UploadMeshUniforms(unsigned int program, RenderSystem *renderSystem, Entity e, int materialID) override;
+
+  void DrawObject(unsigned int program, RenderSystem *renderSystem, Entity e) override
   {
     // Does not require a drawable object, so no drawing here
     // In other words, since this module only requires material, and material is not a drawable component, let the module that requires the model component to draw instead
@@ -29,7 +31,9 @@ class CoreObjectModule : public RenderModule
 public:
   std::pair<std::string, std::string> GetShaders(RenderSystem *renderSystem, Entity e) const override;
 
-  void UploadUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e) override;
+  void UploadObjectUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e) override;
 
-  void DrawObject(RenderSystem *renderSystem, Entity e) override;
+  void UploadMeshUniforms(unsigned int program, RenderSystem *renderSystem, Entity e, int materialID) override {}
+
+  void DrawObject(unsigned int program, RenderSystem *renderSystem, Entity e) override;
 };

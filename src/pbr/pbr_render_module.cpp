@@ -10,40 +10,13 @@ std::pair<std::string, std::string> PBRLightingModule::GetShaders(RenderSystem *
   return {"", "shaders/pbr_materials/pbr_shader.frag"};
 }
 
-void PBRLightingModule::UploadUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e)
+void PBRLightingModule::UploadObjectUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e)
 {
   if (!renderSystem->gCoordinator->HasComponent<PBRMaterialComponent>(e))
   {
     return;
   }
   glUniform3fv(glGetUniformLocation(program, "viewPos"), 1, glm::value_ptr(camera.Position));
-
-  glm::vec3 albedo(1.0f, 1.0f, 1.0f);
-  std::shared_ptr<Texture> texture = nullptr;
-
-  auto &materialComponent = renderSystem->gCoordinator->GetComponent<PBRMaterialComponent>(e);
-  if (materialComponent.material)
-  {
-    albedo = materialComponent.material->getAlbedo();
-
-    if (materialComponent.material->hasAlbedoMap())
-      texture = materialComponent.material->getAlbedoMap();
-  }
-
-  glUniform3fv(glGetUniformLocation(program, "materialAlbedo"), 1, glm::value_ptr(albedo));
-
-  // Bind the texture
-  if (texture)
-  {
-    unsigned int slot = 0; // Use slot 0 for base textures
-    texture->bind(slot);
-    glUniform1i(glGetUniformLocation(program, "albedoMap"), slot);
-    glUniform1i(glGetUniformLocation(program, "useAlbedoMap"), true);
-  }
-  else
-  {
-    glUniform1i(glGetUniformLocation(program, "useAlbedoMap"), false);
-  }
 
   // Lighting
   // This if statement ignores lighting for all entities with a point light component
@@ -80,5 +53,57 @@ void PBRLightingModule::UploadUniforms(unsigned int program, RenderSystem *rende
   else
   {
     glUniform1i(glGetUniformLocation(program, "ignoreLighting"), true);
+  }
+}
+
+void PBRLightingModule::UploadMeshUniforms(unsigned int program, RenderSystem *renderSystem, Entity e, int materialID)
+{
+  if (!renderSystem->gCoordinator->HasComponent<PBRMaterialComponent>(e))
+  {
+    return;
+  }
+
+  glm::vec3 albedo(1.0f, 1.0f, 1.0f);
+  std::shared_ptr<Texture> texture = nullptr;
+
+  auto &materialComponent = renderSystem->gCoordinator->GetComponent<PBRMaterialComponent>(e);
+  std::shared_ptr<PBRMaterial> material = nullptr;
+  if (materialID == -1 && !materialComponent.materials.empty())
+  {
+    material = materialComponent.materials.at(0);
+  }
+  else
+  {
+    for (const auto &mat : materialComponent.materials)
+    {
+      if (mat->id == materialID)
+      {
+        material = mat;
+        break;
+      }
+    }
+  }
+
+  if (material)
+  {
+    albedo = material->getAlbedo();
+
+    if (material->hasAlbedoMap())
+      texture = material->getAlbedoMap();
+  }
+
+  glUniform3fv(glGetUniformLocation(program, "materialAlbedo"), 1, glm::value_ptr(albedo));
+
+  // Bind the texture
+  if (texture)
+  {
+    unsigned int slot = 0; // Use slot 0 for base textures
+    texture->bind(slot);
+    glUniform1i(glGetUniformLocation(program, "albedoMap"), slot);
+    glUniform1i(glGetUniformLocation(program, "useAlbedoMap"), true);
+  }
+  else
+  {
+    glUniform1i(glGetUniformLocation(program, "useAlbedoMap"), false);
   }
 }

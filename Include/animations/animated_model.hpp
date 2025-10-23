@@ -21,7 +21,7 @@ public:
     AnimatedModel() = default;
     ~AnimatedModel() = default;
 
-    static std::shared_ptr<AnimatedModel> createModelFromFile(const std::string &path);
+    static std::shared_ptr<AnimatedModel> createModelFromFile(const std::string &path, bool loadMaterials = true);
 
     void Draw() const;
 
@@ -38,9 +38,9 @@ public:
     }
 
 private:
-    void loadModel(const std::string &path);
-    void processNode(aiNode *node, const aiScene *scene);
-    std::unique_ptr<AnimatedMesh> processMesh(aiMesh *mesh, const aiScene *scene);
+    void loadModel(const std::string &path, bool loadMaterials);
+    void processNode(aiNode *node, const aiScene *scene, bool loadMaterials);
+    std::unique_ptr<AnimatedMesh> processMesh(aiMesh *mesh, const aiScene *scene, bool loadMaterials);
     std::vector<AnimatedVertex> loadVertices(aiMesh *mesh);
     std::vector<unsigned int> loadIndices(aiMesh *mesh);
     void loadBones(aiMesh *mesh, std::vector<AnimatedVertex> &vertices);
