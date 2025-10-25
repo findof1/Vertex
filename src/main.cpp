@@ -151,25 +151,25 @@ int main()
   auto cubeModel = Model::createModelFromFile("assets/models/cube.obj", false);
   auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj", false);
 
-// Create a cube entity
-{
-    Entity cube = coordinator->CreateEntity();
-    TransformComponent cubeTransform{};
-    cubeTransform.translation = {0.0f, 0.0f, -5.0f};
-    cubeTransform.scale = {1.0f, 1.0f, 1.0f};
-    coordinator->AddComponent(cube, cubeTransform);
-    coordinator->AddComponent(cube, ModelComponent{cubeModel});
-    PBRMaterialComponent cubeMat{std::make_shared<PBRMaterial>()};
-    cubeMat.materials.at(0)->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
-    cubeMat.materials.at(0)->setAlbedoMap(fireTexture);
-    coordinator->AddComponent(cube, cubeMat);
-    auto cubeRB = std::make_shared<RigidBody>();
-    cubeRB->mass = 2.0f;
-    cubeRB->useGravity = true;
-    cubeRB->gravity = glm::vec3(0.0f, -1.84f, 0.0f);
-    RigidbodyComponent cubeRigidbody{cubeRB};
-    coordinator->AddComponent(cube, cubeRigidbody);
-}
+  // Create a cube entity
+  {
+      Entity cube = coordinator->CreateEntity();
+      TransformComponent cubeTransform{};
+      cubeTransform.translation = {0.0f, 0.0f, -5.0f};
+      cubeTransform.scale = {1.0f, 1.0f, 1.0f};
+      coordinator->AddComponent(cube, cubeTransform);
+      coordinator->AddComponent(cube, ModelComponent{cubeModel});
+      PBRMaterialComponent cubeMat{std::make_shared<PBRMaterial>()};
+      cubeMat.materials.at(0)->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
+      cubeMat.materials.at(0)->setAlbedoMap(fireTexture);
+      coordinator->AddComponent(cube, cubeMat);
+      auto cubeRB = std::make_shared<RigidBody>();
+      cubeRB->mass = 2.0f;
+      cubeRB->useGravity = true;
+      cubeRB->gravity = glm::vec3(0.0f, -1.84f, 0.0f);
+      RigidbodyComponent cubeRigidbody{cubeRB};
+      coordinator->AddComponent(cube, cubeRigidbody);
+  }
 
   // Create a phong man entity
   {
