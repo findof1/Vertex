@@ -1,8 +1,6 @@
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -22,6 +20,8 @@
 #include "animations/animated_model.hpp"
 #include "animations/animations_system.hpp"
 #include "animations/animation.hpp"
+#include "physics/physics_system.hpp"
+#include "physics/rigidbody.hpp"
 
 Camera camera;
 
@@ -104,6 +104,8 @@ int main()
   coordinator->RegisterComponent<PBRMaterialComponent>();
   coordinator->RegisterComponent<AnimatedModelComponent>();
   coordinator->RegisterComponent<AnimationComponent>();
+  coordinator->RegisterComponent<RigidbodyComponent>();
+  coordinator->RegisterComponent<ColliderComponent>();
 
   // Register and configure animations system
   auto animationsSystem = coordinator->RegisterSystem<AnimationsSystem>();
@@ -128,6 +130,15 @@ int main()
   renderSystem->AddModule(std::make_unique<PBRLightingModule>());
   renderSystem->AddModule(std::make_unique<AnimationsObjectModule>());
 
+  // Register and configure physics system
+  auto physicsSystem = coordinator->RegisterSystem<PhysicsSystem>();
+  {
+      Signature signature;
+      signature.set(coordinator->GetComponentType<RigidbodyComponent>());
+      signature.set(coordinator->GetComponentType<TransformComponent>());
+      coordinator->SetSystemSignature<PhysicsSystem>(signature);
+  }
+
   // Initiate Texture Manager
   TextureManager textureManager;
 
@@ -140,8 +151,8 @@ int main()
   auto cubeModel = Model::createModelFromFile("assets/models/cube.obj", false);
   auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj", false);
 
-  // Create a cube entity
-  {
+// Create a cube entity
+{
     Entity cube = coordinator->CreateEntity();
     TransformComponent cubeTransform{};
     cubeTransform.translation = {0.0f, 0.0f, -5.0f};
@@ -152,7 +163,13 @@ int main()
     cubeMat.materials.at(0)->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
     cubeMat.materials.at(0)->setAlbedoMap(fireTexture);
     coordinator->AddComponent(cube, cubeMat);
-  }
+    auto cubeRB = std::make_shared<RigidBody>();
+    cubeRB->mass = 2.0f;
+    cubeRB->useGravity = true;
+    cubeRB->gravity = glm::vec3(0.0f, -1.84f, 0.0f);
+    RigidbodyComponent cubeRigidbody{cubeRB};
+    coordinator->AddComponent(cube, cubeRigidbody);
+}
 
   // Create a phong man entity
   {
@@ -226,10 +243,13 @@ int main()
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Update physics before rendering
+    physicsSystem->Update(coordinator, dt);
+
     // Update animations before rendering
     animationsSystem->Update(dt, camera);
 
-    // Update and render using ECS
+    // Render
     renderSystem->Update(dt, camera);
 
     glfwSwapBuffers(window);
