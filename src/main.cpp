@@ -22,6 +22,9 @@
 #include "animations/animated_model.hpp"
 #include "animations/animations_system.hpp"
 #include "animations/animation.hpp"
+#include "water/components.hpp"
+#include "water/water_mesh.hpp"
+#include <water/water_render_module.hpp>
 
 Camera camera;
 
@@ -104,6 +107,7 @@ int main()
   coordinator->RegisterComponent<PBRMaterialComponent>();
   coordinator->RegisterComponent<AnimatedModelComponent>();
   coordinator->RegisterComponent<AnimationComponent>();
+  coordinator->RegisterComponent<WaterMeshComponent>();
 
   // Register and configure animations system
   auto animationsSystem = coordinator->RegisterSystem<AnimationsSystem>();
@@ -127,6 +131,7 @@ int main()
   renderSystem->AddModule(std::make_unique<CoreLightingModule>());
   renderSystem->AddModule(std::make_unique<PBRLightingModule>());
   renderSystem->AddModule(std::make_unique<AnimationsObjectModule>());
+  renderSystem->AddModule(std::make_unique<WaterModule>());
 
   // Initiate Texture Manager
   TextureManager textureManager;
@@ -136,9 +141,11 @@ int main()
   auto manTextures = Material::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manTexturesPBR = PBRMaterial::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manModel = AnimatedModel::createModelFromFile("assets/models/animationMan/man.gltf");
+  auto manModel2 = AnimatedModel::createModelFromFile("assets/models/animationMan/man.gltf");
   std::shared_ptr<Animation> manAnimation = std::make_shared<Animation>("assets/models/animationMan/man.gltf", manModel->boneMapping);
   auto cubeModel = Model::createModelFromFile("assets/models/cube.obj", false);
   auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj", false);
+  std::shared_ptr<WaterMesh> waterMesh = std::make_shared<WaterMesh>(100, 50, "assets/textures/sky3.png", 16);
 
   // Create a cube entity
   {
@@ -152,6 +159,16 @@ int main()
     cubeMat.materials.at(0)->setAlbedo(glm::vec3(0.0f, 1.0f, 0.3f));
     cubeMat.materials.at(0)->setAlbedoMap(fireTexture);
     coordinator->AddComponent(cube, cubeMat);
+  }
+
+  // Create a water entity
+  {
+    Entity water = coordinator->CreateEntity();
+    TransformComponent waterTransform{};
+    waterTransform.translation = {0.0f, -7.0f, 0.0f};
+    waterTransform.scale = {1.0f, 1.0f, 1.0f};
+    coordinator->AddComponent(water, waterTransform);
+    coordinator->AddComponent(water, WaterMeshComponent{waterMesh});
   }
 
   // Create a phong man entity
@@ -176,7 +193,7 @@ int main()
     manTransform.scale = {1.0f, 1.0f, 1.0f};
     manTransform.rotation = {0.0f, 90.0f, 0.0f};
     coordinator->AddComponent(man, manTransform);
-    coordinator->AddComponent(man, AnimatedModelComponent{manModel});
+    coordinator->AddComponent(man, AnimatedModelComponent{manModel2});
     PBRMaterialComponent manMat;
     manMat.materials = manTexturesPBR;
     coordinator->AddComponent(man, manMat);

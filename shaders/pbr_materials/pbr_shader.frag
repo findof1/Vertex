@@ -108,13 +108,15 @@ if(!ignoreLighting){
     }
 
     // Ambient lighting
-    vec3 ambient = vec3(0.1) * albedo * ao;
+    vec3 ambient = vec3(0.01) * albedo + vec3(0.05) * albedo * ao;
+
 
     vec3 color = ambient + Lo;
 
     // Tone mapping and gamma correction
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0 / 2.2)); // linear to gamma
+
 
     FragColor = vec4(color, 1.0);
     }else{
