@@ -21,10 +21,10 @@ struct WaterWave
 
 struct WaterMaterial
 {
-    glm::vec3 deepColor = glm::vec3(0.0f, 0.2f, 0.35f);
+    glm::vec3 deepColor = glm::vec3(0.0f, 0.4f, 0.7f);
     glm::vec3 sunDir = glm::normalize(glm::vec3(-0.3f, -1.0f, 0.2f));
     glm::vec3 sunColor = glm::vec3(1.0f, 0.95f, 0.85f);
-    float foamThreshold = 0.8f;
+    float foamThreshold = 0.5f;
     // float ior = 1.333f; // index of refraction //unused for now
 };
 

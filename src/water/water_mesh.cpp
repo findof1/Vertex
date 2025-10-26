@@ -16,28 +16,53 @@ WaterMesh::WaterMesh(int n, float size, const std::string &envPath, int waveCoun
     loadCubemapFromEquirectangular(envPath);
     generateWaterMesh(n, size);
     setupMesh();
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dirDist(0.0f, glm::two_pi<float>());
-    std::uniform_real_distribution<float> wavelengthDist(5.0f, 30.0f);
-    std::uniform_real_distribution<float> amplitudeDist(0.05f, 0.4f);
-    std::uniform_real_distribution<float> speedDist(0.5f, 2.0f);
-    std::uniform_real_distribution<float> steepnessDist(0.01f, 0.1f);
-
     waves.reserve(waveCount);
-    for (int i = 0; i < waveCount; i++)
     {
-        float angle = dirDist(gen);
-        glm::vec2 dir = glm::normalize(glm::vec2(cos(angle), sin(angle)));
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> dirDist(0.0f, glm::two_pi<float>());
+        std::uniform_real_distribution<float> wavelengthDist(5.0f, 30.0f);
+        std::uniform_real_distribution<float> amplitudeDist(0.05f, 0.4f);
+        std::uniform_real_distribution<float> speedDist(0.5f, 1.0f);
+        std::uniform_real_distribution<float> steepnessDist(0.01f, 0.1f);
 
-        WaterWave w;
-        w.direction = dir;
-        w.wavelength = wavelengthDist(gen);
-        w.amplitude = amplitudeDist(gen);
-        w.speed = speedDist(gen);
-        w.steepness = steepnessDist(gen);
-        waves.push_back(w);
+        for (int i = 0; i < waveCount / 2; i++)
+        {
+            float angle = dirDist(gen);
+            glm::vec2 dir = glm::normalize(glm::vec2(cos(angle), sin(angle)));
+
+            WaterWave w;
+            w.direction = dir;
+            w.wavelength = wavelengthDist(gen);
+            w.amplitude = amplitudeDist(gen);
+            w.speed = speedDist(gen);
+            w.steepness = steepnessDist(gen);
+            waves.push_back(w);
+        }
+    }
+
+    {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> dirDist(0.0f, glm::two_pi<float>());
+        std::uniform_real_distribution<float> wavelengthDist(1.0f, 5.0f);
+        std::uniform_real_distribution<float> amplitudeDist(0.01f, 0.02f);
+        std::uniform_real_distribution<float> speedDist(0.5f, 1.0f);
+        std::uniform_real_distribution<float> steepnessDist(0.01f, 0.1f);
+
+        for (int i = 0; i < waveCount / 2; i++)
+        {
+            float angle = dirDist(gen);
+            glm::vec2 dir = glm::normalize(glm::vec2(cos(angle), sin(angle)));
+
+            WaterWave w;
+            w.direction = dir;
+            w.wavelength = wavelengthDist(gen);
+            w.amplitude = amplitudeDist(gen);
+            w.speed = speedDist(gen);
+            w.steepness = steepnessDist(gen);
+            waves.push_back(w);
+        }
     }
 }
 
@@ -133,7 +158,7 @@ unsigned int WaterMesh::loadCubemapFromEquirectangular(const std::string &path)
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 

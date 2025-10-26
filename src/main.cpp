@@ -93,6 +93,9 @@ int main()
   glfwSetCursorPosCallback(window, mouse_callback);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
   glEnable(GL_DEPTH_TEST);
 
   // Initialize ECS
@@ -156,7 +159,7 @@ int main()
   std::shared_ptr<Animation> manAnimation = std::make_shared<Animation>("assets/models/animationMan/man.gltf", manModel->boneMapping);
   auto cubeModel = Model::createModelFromFile("assets/models/cube.obj", false);
   auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj", false);
-  std::shared_ptr<WaterMesh> waterMesh = std::make_shared<WaterMesh>(100, 50, "assets/textures/sky3.png", 16);
+  std::shared_ptr<WaterMesh> waterMesh = std::make_shared<WaterMesh>(1000, 25, "assets/textures/sky3.png", 24);
 
   // Create a cube entity
   {
