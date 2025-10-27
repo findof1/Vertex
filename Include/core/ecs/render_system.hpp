@@ -6,12 +6,35 @@
 #include "../camera.hpp"
 #include <memory>
 #include <utility>
+#include <glad.h>
 class RenderSystem;
+
+struct OffscreenObjects
+{
+    std::unordered_map<std::string, unsigned int> framebuffers;
+    std::unordered_map<std::string, unsigned int> textures;
+    int fbWidth = 1000;
+    int fbHeight = 1000;
+};
 
 class RenderModule
 {
 public:
-    virtual ~RenderModule() = default;
+    // optional fields if the module requires offscreen renders
+    bool requiresOffscreenFrameBuffer = false;
+    OffscreenObjects offscreenObjects;
+
+    virtual void InitOffscreenFramebuffers() {}
+
+    virtual void RenderOffscreenFramebuffers(RenderSystem *renderSystem, const Camera &camera) {}
+
+    virtual ~RenderModule()
+    {
+        for (auto &[name, tex] : offscreenObjects.textures)
+            glDeleteTextures(1, &tex);
+        for (auto &[name, fb] : offscreenObjects.framebuffers)
+            glDeleteFramebuffers(1, &fb);
+    };
 
     virtual std::pair<std::string, std::string> GetShaders(RenderSystem *renderSystem, Entity e) const = 0;
 
@@ -54,4 +77,7 @@ public:
     void AddModule(std::unique_ptr<RenderModule> module);
     void Init(std::shared_ptr<Coordinator> coordinator);
     void Update(float deltaTime, const Camera &camera);
+
+private:
+    void RenderScene(float deltaTime, const Camera &camera);
 };

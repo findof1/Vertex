@@ -92,11 +92,29 @@ void RenderSystem::AddModule(std::unique_ptr<RenderModule> module)
         if (typeid(*m) == typeid(*module))
             return;
     }
+    if (module->requiresOffscreenFrameBuffer)
+    {
+        module->InitOffscreenFramebuffers();
+    }
 
     modules.push_back(std::move(module));
 }
 
 void RenderSystem::Update(float deltaTime, const Camera &camera)
+{
+    for (auto &module : modules)
+    {
+        if (!module->requiresOffscreenFrameBuffer)
+        {
+            continue;
+        }
+
+        module->RenderOffscreenFramebuffers(this, camera);
+    }
+    RenderScene(deltaTime, camera);
+}
+
+void RenderSystem::RenderScene(float deltaTime, const Camera &camera)
 {
 
     for (auto const &entity : mEntities)
