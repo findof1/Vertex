@@ -3,6 +3,8 @@ layout(location = 0) in vec3 aPos; // grid positions (x,z) in local space, y = 0
 
 out vec3 vWorldPos;
 out vec3 vNormal;
+out vec4 vClipPos;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
@@ -18,6 +20,10 @@ struct Wave {
 };
 
 uniform Wave waves[32]; // set numWaves <= 32
+
+// Clipping plane, required in all vertex shaders for modules
+uniform vec4 clipPlane;
+uniform bool enableClip;
 
 // gerstner function for a single wave
 vec3 gerstnerWave(vec3 pos, Wave w, float t) {
@@ -43,8 +49,6 @@ void main() {
     displaced += gerstnerWave(aPos, waves[i], time);
   }
 
-    // Compute normal via partial derivatives (approximate by finite differences)
-    // small offset for derivative
   float eps = 0.1;
   vec3 posX = aPos + vec3(eps, 0.0, 0.0);
   vec3 posZ = aPos + vec3(0.0, 0.0, eps);
@@ -57,8 +61,14 @@ void main() {
   }
   vec3 n = normalize(cross(dZ - displaced, dX - displaced));
 
-  vec4 worldPos = model * vec4(displaced, 1.0);
+  vec4 worldPos = model * vec4(displaced, 1.0); //model * vec4(aPos, 1.0); 
   vWorldPos = worldPos.xyz;
   vNormal = mat3(transpose(inverse(model))) * n;
-  gl_Position = projection * view * worldPos;
+  vClipPos = projection * view * worldPos;
+  gl_Position = vClipPos;
+
+  if(enableClip)
+    gl_ClipDistance[0] = dot(worldPos, clipPlane);
+  else
+    gl_ClipDistance[0] = 1.0;
 }

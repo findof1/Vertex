@@ -9,6 +9,17 @@
 class WaterModule : public RenderModule
 {
 public:
+  WaterModule(float waterHeight = 0) : waterHeight(waterHeight)
+  {
+    requiresOffscreenFrameBuffer = true;
+  }
+
+  float waterHeight;
+
+  void RenderOffscreenFramebuffers(RenderSystem *renderSystem, float deltaTime, const Camera &camera) override;
+
+  void InitOffscreenFramebuffers() override;
+
   std::pair<std::string, std::string> GetShaders(RenderSystem *renderSystem, Entity e) const override;
 
   void UploadObjectUniforms(unsigned int program, RenderSystem *renderSystem, const Camera &camera, Entity e) override;

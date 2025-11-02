@@ -131,12 +131,12 @@ int main()
     signature.set(coordinator->GetComponentType<TransformComponent>());
     coordinator->SetSystemSignature<RenderSystem>(signature);
   }
-  renderSystem->Init(coordinator);
+  renderSystem->Init(coordinator, WIDTH, HEIGHT);
   renderSystem->AddModule(std::make_unique<CoreObjectModule>());
   renderSystem->AddModule(std::make_unique<CoreLightingModule>());
   renderSystem->AddModule(std::make_unique<PBRLightingModule>());
   renderSystem->AddModule(std::make_unique<AnimationsObjectModule>());
-  renderSystem->AddModule(std::make_unique<WaterModule>());
+  renderSystem->AddModule(std::make_unique<WaterModule>(-7));
 
   // Register and configure physics system
   auto physicsSystem = coordinator->RegisterSystem<PhysicsSystem>();
@@ -152,14 +152,16 @@ int main()
 
   // load assets
   auto fireTexture = textureManager.load("assets/textures/fire.png");
+  auto skyTexture = textureManager.load("assets/textures/sky3.png");
   auto manTextures = Material::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manTexturesPBR = PBRMaterial::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manModel = AnimatedModel::createModelFromFile("assets/models/animationMan/man.gltf");
   auto manModel2 = AnimatedModel::createModelFromFile("assets/models/animationMan/man.gltf");
   std::shared_ptr<Animation> manAnimation = std::make_shared<Animation>("assets/models/animationMan/man.gltf", manModel->boneMapping);
   auto cubeModel = Model::createModelFromFile("assets/models/cube.obj", false);
+  auto skyboxModel = Model::createModelFromFile("assets/models/skybox.obj", false);
   auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj", false);
-  std::shared_ptr<WaterMesh> waterMesh = std::make_shared<WaterMesh>(1000, 25, "assets/textures/sky3.png", 24);
+  std::shared_ptr<WaterMesh> waterMesh = std::make_shared<WaterMesh>(1000, 25, 24);
 
   // Create a cube entity
   {
@@ -181,14 +183,37 @@ int main()
     coordinator->AddComponent(cube, cubeRigidbody);
   }
 
-  // Create a water entity
+  // Create a ground entity
   {
-    Entity water = coordinator->CreateEntity();
-    TransformComponent waterTransform{};
-    waterTransform.translation = {0.0f, -7.0f, 0.0f};
-    waterTransform.scale = {1.0f, 1.0f, 1.0f};
-    coordinator->AddComponent(water, waterTransform);
-    coordinator->AddComponent(water, WaterMeshComponent{waterMesh});
+    Entity ground = coordinator->CreateEntity();
+    TransformComponent groundTransform{};
+    groundTransform.translation = {0.0f, -15.0f, 0.0f};
+    groundTransform.scale = {80.0f, 1.0f, 80.0f};
+    coordinator->AddComponent(ground, groundTransform);
+    coordinator->AddComponent(ground, ModelComponent{cubeModel});
+    PBRMaterialComponent groundMat{std::make_shared<PBRMaterial>()};
+    groundMat.materials.at(0)->setAlbedo(glm::vec3(0.7f, 0.45f, 0.05f));
+    coordinator->AddComponent(ground, groundMat);
+    auto groundRB = std::make_shared<RigidBody>();
+    groundRB->mass = 1000.0f;
+    groundRB->useGravity = false;
+    groundRB->gravity = glm::vec3(0.0f, 0.0f, 0.0f);
+    RigidbodyComponent groundRigidbody{groundRB};
+    coordinator->AddComponent(ground, groundRigidbody);
+  }
+
+  // Create a skybox entity
+  {
+    Entity cube = coordinator->CreateEntity();
+    TransformComponent cubeTransform{};
+    cubeTransform.translation = {0.0f, 0.0f, 0.0f};
+    cubeTransform.scale = {100.0f, 100.0f, 100.0f};
+    coordinator->AddComponent(cube, cubeTransform);
+    coordinator->AddComponent(cube, ModelComponent{skyboxModel});
+    PBRMaterialComponent cubeMat{std::make_shared<PBRMaterial>()};
+    cubeMat.materials.at(0)->setAlbedoMap(skyTexture);
+    cubeMat.materials.at(0)->ignoreLighting = true;
+    coordinator->AddComponent(cube, cubeMat);
   }
 
   // Create a water entity

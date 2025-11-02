@@ -4,16 +4,14 @@
 #include <stb_image.h>
 #include <iostream>
 
-WaterMesh::WaterMesh(int n, float size, const std::string &envPath, const WaterMaterial &material, const std::vector<WaterWave> &waves) : material(material), waves(waves)
+WaterMesh::WaterMesh(int n, float size, const WaterMaterial &material, const std::vector<WaterWave> &waves) : material(material), waves(waves)
 {
-    loadCubemapFromEquirectangular(envPath);
     generateWaterMesh(n, size);
     setupMesh();
 }
 
-WaterMesh::WaterMesh(int n, float size, const std::string &envPath, int waveCount)
+WaterMesh::WaterMesh(int n, float size, int waveCount)
 {
-    loadCubemapFromEquirectangular(envPath);
     generateWaterMesh(n, size);
     setupMesh();
     waves.reserve(waveCount);
@@ -86,7 +84,9 @@ void WaterMesh::generateWaterMesh(int n, float size)
             float v = (float)z / (float)n;
             float xpos = (u - 0.5f) * size;
             float zpos = (v - 0.5f) * size;
-            vertices.push_back({glm::vec3(xpos, 0.0f, zpos)});
+            WaterVertex vert;
+            vert.position = glm::vec3(xpos, 0.0f, zpos);
+            vertices.push_back(vert);
         }
     }
 
@@ -127,7 +127,7 @@ void WaterMesh::setupMesh()
     // Set the vertex attribute pointers
     // Vertex Positions
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(WaterVertex), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(WaterVertex), (void *)offsetof(WaterVertex, position));
 
     glBindVertexArray(0);
 }
@@ -137,34 +137,4 @@ void WaterMesh::Draw() const
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-}
-
-unsigned int WaterMesh::loadCubemapFromEquirectangular(const std::string &path)
-{
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
-    if (!data)
-    {
-        std::cerr << "Failed to load equirectangular texture: " << path << std::endl;
-        return 0;
-    }
-
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    return textureID;
 }

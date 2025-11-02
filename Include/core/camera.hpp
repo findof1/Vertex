@@ -31,6 +31,25 @@ public:
   float MouseSensitivity;
   float Zoom;
 
+  Camera(const Camera &other)
+  {
+    Position = other.Position;
+    Front = other.Front;
+    Up = other.Up;
+    Right = other.Right;
+    WorldUp = other.WorldUp;
+
+    Yaw = other.Yaw;
+    Pitch = other.Pitch;
+
+    MovementSpeed = other.MovementSpeed;
+    MouseSensitivity = other.MouseSensitivity;
+    Zoom = other.Zoom;
+
+    // Update vectors just to be safe
+    updateCameraVectors();
+  }
+
   Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
          glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
          float yaw = -90.0f,
@@ -54,7 +73,7 @@ public:
 
   glm::mat4 getProjectionMatrix(float aspectRatio) const
   {
-    return glm::perspective(glm::radians(Zoom), aspectRatio, 0.01f, 100.0f);
+    return glm::perspective(glm::radians(Zoom), aspectRatio, 0.01f, 1000.0f);
   }
 
   void processKeyboard(CameraMovement direction, float deltaTime)
@@ -103,6 +122,12 @@ public:
         Pitch = -89.0f;
     }
 
+    updateCameraVectors();
+  }
+
+  void invertPitch()
+  {
+    Pitch = -Pitch;
     updateCameraVectors();
   }
 

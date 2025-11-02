@@ -80,9 +80,12 @@ unsigned int RenderSystem::GetOrCreateShader(const std::string &vert, const std:
     return program;
 }
 
-void RenderSystem::Init(std::shared_ptr<Coordinator> coordinator)
+void RenderSystem::Init(std::shared_ptr<Coordinator> coordinator, int screenWidth, int screenHeight)
 {
+    this->screenWidth = screenWidth;
+    this->screenHeight = screenHeight;
     gCoordinator = coordinator;
+    glEnable(GL_CLIP_DISTANCE0);
 }
 
 void RenderSystem::AddModule(std::unique_ptr<RenderModule> module)
@@ -109,12 +112,16 @@ void RenderSystem::Update(float deltaTime, const Camera &camera)
             continue;
         }
 
-        module->RenderOffscreenFramebuffers(this, camera);
+        module->RenderOffscreenFramebuffers(this, deltaTime, camera);
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default framebuffer
+    glViewport(0, 0, screenWidth, screenHeight);
+
     RenderScene(deltaTime, camera);
 }
 
-void RenderSystem::RenderScene(float deltaTime, const Camera &camera)
+void RenderSystem::RenderScene(float deltaTime, const Camera &camera, bool mainRender, bool useClippingPlane, glm::vec4 clippingPlane)
 {
 
     for (auto const &entity : mEntities)
@@ -123,6 +130,10 @@ void RenderSystem::RenderScene(float deltaTime, const Camera &camera)
 
         for (auto &module : modules)
         {
+            if (!mainRender && module->requiresOffscreenFrameBuffer)
+            {
+                continue;
+            }
             auto [vert, frag] = module->GetShaders(this, entity);
             if (!vert.empty())
                 vertexPath = vert;
@@ -138,13 +149,31 @@ void RenderSystem::RenderScene(float deltaTime, const Camera &camera)
         unsigned int program = GetOrCreateShader(vertexPath, fragmentPath);
         glUseProgram(program);
 
+        if (useClippingPlane)
+        {
+            glUniform1i(glGetUniformLocation(program, "enableClip"), GL_TRUE);
+            glUniform4f(glGetUniformLocation(program, "clipPlane"), clippingPlane.x, clippingPlane.y, clippingPlane.z, clippingPlane.w);
+        }
+        else
+        {
+            glUniform1i(glGetUniformLocation(program, "enableClip"), GL_FALSE);
+        }
+
         for (auto &module : modules)
         {
+            if (!mainRender && module->requiresOffscreenFrameBuffer)
+            {
+                continue;
+            }
             module->UploadObjectUniforms(program, this, camera, entity);
         }
 
         for (auto &module : modules)
         {
+            if (!mainRender && module->requiresOffscreenFrameBuffer)
+            {
+                continue;
+            }
             module->DrawObject(program, this, entity);
         }
 

@@ -67,6 +67,7 @@ void PBRLightingModule::UploadMeshUniforms(unsigned int program, RenderSystem *r
   std::shared_ptr<Texture> texture = nullptr;
 
   auto &materialComponent = renderSystem->gCoordinator->GetComponent<PBRMaterialComponent>(e);
+
   std::shared_ptr<PBRMaterial> material = nullptr;
   if (materialID == -1 && !materialComponent.materials.empty())
   {
@@ -93,6 +94,10 @@ void PBRLightingModule::UploadMeshUniforms(unsigned int program, RenderSystem *r
   }
 
   glUniform3fv(glGetUniformLocation(program, "materialAlbedo"), 1, glm::value_ptr(albedo));
+  if (material->ignoreLighting)
+  {
+    glUniform1i(glGetUniformLocation(program, "ignoreLighting"), GL_TRUE);
+  }
 
   // Bind the texture
   if (texture)

@@ -16,6 +16,7 @@ class PBRMaterial
 {
 public:
     int id;
+    bool ignoreLighting = false;
     PBRMaterial() = default;
     virtual ~PBRMaterial() = default;
 

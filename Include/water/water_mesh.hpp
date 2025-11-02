@@ -34,20 +34,15 @@ public:
     WaterMaterial material;
     std::vector<WaterWave> waves;
 
-    unsigned int envMap = 0;
-
-    WaterMesh(int n, float size, const std::string &envPath, int waves);
-    WaterMesh(int n, float size, const std::string &envPath, const WaterMaterial &material, const std::vector<WaterWave> &waves);
+    WaterMesh(int n, float size, int waves);
+    WaterMesh(int n, float size, const WaterMaterial &material, const std::vector<WaterWave> &waves);
     ~WaterMesh();
 
     void Draw() const;
 
-    void LoadEnvMap(const std::string &equirectangularPath);
-
 private:
     void generateWaterMesh(int n, float size);
     void setupMesh();
-    unsigned int loadCubemapFromEquirectangular(const std::string &path);
 
     std::vector<WaterVertex> vertices;
     std::vector<unsigned int> indices;

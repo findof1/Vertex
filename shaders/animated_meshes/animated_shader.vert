@@ -16,6 +16,10 @@ uniform mat4 projection;
 
 uniform mat4 boneMatrices[100];
 
+// Clipping plane, required in all vertex shaders for modules
+uniform vec4 clipPlane;
+uniform bool enableClip;
+
 void main() {
     mat4 skinMatrix = boneMatrices[inBoneIDs.x] * inBoneWeights.x +
         boneMatrices[inBoneIDs.y] * inBoneWeights.y +
@@ -31,4 +35,9 @@ void main() {
     FragPos = worldPos.xyz;
     TexCoords = aTexCoord;
     Normal = mat3(transpose(inverse(model))) * skinnedNormal;
+
+    if(enableClip)
+        gl_ClipDistance[0] = dot(worldPos, clipPlane);
+    else
+        gl_ClipDistance[0] = 1.0;
 }

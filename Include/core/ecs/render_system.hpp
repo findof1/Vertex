@@ -26,7 +26,7 @@ public:
 
     virtual void InitOffscreenFramebuffers() {}
 
-    virtual void RenderOffscreenFramebuffers(RenderSystem *renderSystem, const Camera &camera) {}
+    virtual void RenderOffscreenFramebuffers(RenderSystem *renderSystem, float deltaTime, const Camera &camera) {}
 
     virtual ~RenderModule()
     {
@@ -71,13 +71,13 @@ public:
     std::unordered_map<ShaderKey, unsigned int, ShaderKeyHash> shaderCache;
     std::shared_ptr<Coordinator> gCoordinator;
     std::vector<std::unique_ptr<RenderModule>> modules;
+    int screenWidth;
+    int screenHeight;
 
     unsigned int GetOrCreateShader(const std::string &vert, const std::string &frag);
 
     void AddModule(std::unique_ptr<RenderModule> module);
-    void Init(std::shared_ptr<Coordinator> coordinator);
+    void Init(std::shared_ptr<Coordinator> coordinator, int screenWidth, int screenHeight);
     void Update(float deltaTime, const Camera &camera);
-
-private:
-    void RenderScene(float deltaTime, const Camera &camera);
+    void RenderScene(float deltaTime, const Camera &camera, bool mainRender = true, bool useClippingPlane = false, glm::vec4 clippingPlane = glm::vec4(-1));
 };
