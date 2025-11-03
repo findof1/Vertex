@@ -1,9 +1,11 @@
 #version 330 core
 layout(location = 0) in vec3 aPos; // grid positions (x,z) in local space, y = 0
+layout(location = 1) in vec2 aTexPos;
 
 out vec3 vWorldPos;
 out vec3 vNormal;
 out vec4 vClipPos;
+out vec2 vTexPos;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -65,6 +67,7 @@ void main() {
   vWorldPos = worldPos.xyz;
   vNormal = mat3(transpose(inverse(model))) * n;
   vClipPos = projection * view * worldPos;
+  vTexPos = aTexPos;
   gl_Position = vClipPos;
 
   if(enableClip)

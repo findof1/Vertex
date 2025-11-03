@@ -3,14 +3,15 @@
 #include <glm/gtc/constants.hpp>
 #include <stb_image.h>
 #include <iostream>
+#include "core/texture.hpp"
 
-WaterMesh::WaterMesh(int n, float size, const WaterMaterial &material, const std::vector<WaterWave> &waves) : material(material), waves(waves)
+WaterMesh::WaterMesh(int n, float size, const WaterMaterial &material, const std::vector<WaterWave> &waves, std::shared_ptr<Texture> waterDUDV, std::shared_ptr<Texture> waterNormals) : material(material), waves(waves), waterDUDV(waterDUDV), waterNormals(waterNormals)
 {
     generateWaterMesh(n, size);
     setupMesh();
 }
 
-WaterMesh::WaterMesh(int n, float size, int waveCount)
+WaterMesh::WaterMesh(int n, float size, int waveCount, std::shared_ptr<Texture> waterDUDV, std::shared_ptr<Texture> waterNormals) : waterDUDV(waterDUDV), waterNormals(waterNormals)
 {
     generateWaterMesh(n, size);
     setupMesh();
@@ -86,6 +87,7 @@ void WaterMesh::generateWaterMesh(int n, float size)
             float zpos = (v - 0.5f) * size;
             WaterVertex vert;
             vert.position = glm::vec3(xpos, 0.0f, zpos);
+            vert.texPos = glm::vec2(u * size / 6, v * size / 6);
             vertices.push_back(vert);
         }
     }
@@ -128,6 +130,9 @@ void WaterMesh::setupMesh()
     // Vertex Positions
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(WaterVertex), (void *)offsetof(WaterVertex, position));
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(WaterVertex), (void *)offsetof(WaterVertex, texPos));
 
     glBindVertexArray(0);
 }

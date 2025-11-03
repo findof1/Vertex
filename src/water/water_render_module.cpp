@@ -82,6 +82,12 @@ void WaterModule::UploadObjectUniforms(unsigned int program, RenderSystem *rende
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, offscreenObjects.textures.at("colorTexRefraction"));
   glUniform1i(glGetUniformLocation(program, "refractionTex"), 1);
+
+  water.water->waterDUDV->bind(2);
+  glUniform1i(glGetUniformLocation(program, "dudvMap"), 2);
+
+  water.water->waterNormals->bind(3);
+  glUniform1i(glGetUniformLocation(program, "normalMap"), 3);
 }
 
 void WaterModule::UploadMeshUniforms(unsigned int program, RenderSystem *renderSystem, Entity e, int materialID)

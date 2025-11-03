@@ -4,10 +4,12 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 
 struct WaterVertex
 {
     glm::vec3 position;
+    glm::vec2 texPos;
 };
 
 struct WaterWave
@@ -24,9 +26,11 @@ struct WaterMaterial
     glm::vec3 deepColor = glm::vec3(0.0f, 0.4f, 0.7f);
     glm::vec3 sunDir = glm::normalize(glm::vec3(-0.3f, -1.0f, 0.2f));
     glm::vec3 sunColor = glm::vec3(1.0f, 0.95f, 0.85f);
-    float foamThreshold = 0.5f;
+    float foamThreshold = 0.2f;
     // float ior = 1.333f; // index of refraction //unused for now
 };
+
+class Texture;
 
 class WaterMesh
 {
@@ -34,8 +38,11 @@ public:
     WaterMaterial material;
     std::vector<WaterWave> waves;
 
-    WaterMesh(int n, float size, int waves);
-    WaterMesh(int n, float size, const WaterMaterial &material, const std::vector<WaterWave> &waves);
+    std::shared_ptr<Texture> waterDUDV;
+    std::shared_ptr<Texture> waterNormals;
+
+    WaterMesh(int n, float size, int waves, std::shared_ptr<Texture> waterDUDV, std::shared_ptr<Texture> waterNormals);
+    WaterMesh(int n, float size, const WaterMaterial &material, const std::vector<WaterWave> &waves, std::shared_ptr<Texture> waterDUDV, std::shared_ptr<Texture> waterNormals);
     ~WaterMesh();
 
     void Draw() const;

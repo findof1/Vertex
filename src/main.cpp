@@ -161,7 +161,10 @@ int main()
   auto cubeModel = Model::createModelFromFile("assets/models/cube.obj", false);
   auto skyboxModel = Model::createModelFromFile("assets/models/skybox.obj", false);
   auto vaseModel = Model::createModelFromFile("assets/models/smooth_vase.obj", false);
-  std::shared_ptr<WaterMesh> waterMesh = std::make_shared<WaterMesh>(1000, 25, 24);
+
+  auto waterDUDV = textureManager.load("assets/textures/waterdudv.png");
+  auto waterNormals = textureManager.load("assets/textures/waternormal.png");
+  std::shared_ptr<WaterMesh> waterMesh = std::make_shared<WaterMesh>(1000, 100, 24, waterDUDV, waterNormals);
 
   // Create a cube entity
   {
