@@ -1,0 +1,11 @@
+#version 330 core
+out vec4 FragColor;
+in vec2 vTexCoords;
+
+// Every post processing shader requires this
+uniform sampler2D screenTexture;
+
+void main()
+{
+    FragColor = texture(screenTexture, vTexCoords);
+}

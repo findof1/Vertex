@@ -7,6 +7,7 @@
 #include <memory>
 #include <utility>
 #include <glad.h>
+#include <functional>
 class RenderSystem;
 
 struct OffscreenObjects
@@ -47,6 +48,14 @@ public:
     virtual void DrawObject(unsigned int program, RenderSystem *renderSystem, Entity e) {};
 };
 
+class PostProcessPass
+{
+public:
+    std::string shaderVert;
+    std::string shaderFrag;
+    virtual void UploadUniforms(unsigned int program) {};
+};
+
 struct ShaderKey
 {
     std::string vertex;
@@ -71,13 +80,19 @@ public:
     std::unordered_map<ShaderKey, unsigned int, ShaderKeyHash> shaderCache;
     std::shared_ptr<Coordinator> gCoordinator;
     std::vector<std::unique_ptr<RenderModule>> modules;
+    std::vector<std::unique_ptr<PostProcessPass>> postProcessPasses;
     int screenWidth;
     int screenHeight;
+
+    unsigned int sceneFBO, sceneColorTex, sceneDepthRBO;
+    unsigned int pingpongFBO[2], pingpongColorTex[2];
+    unsigned int quadVAO, quadVBO;
 
     unsigned int GetOrCreateShader(const std::string &vert, const std::string &frag);
 
     void AddModule(std::unique_ptr<RenderModule> module);
     void Init(std::shared_ptr<Coordinator> coordinator, int screenWidth, int screenHeight);
+    void InitPostProcessing();
     void Update(float deltaTime, const Camera &camera);
     void RenderScene(float deltaTime, const Camera &camera, bool mainRender = true, bool useClippingPlane = false, glm::vec4 clippingPlane = glm::vec4(-1));
 };

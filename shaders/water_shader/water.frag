@@ -15,7 +15,6 @@ uniform sampler2D normalMap;
 uniform vec3 sunDir;
 uniform vec3 sunColor;
 uniform float time;
-//uniform float waterIOR; // ~1.333 //unused for now
 uniform vec3 deepColor; // underwater color
 uniform float foamThreshold; // control foam
 
