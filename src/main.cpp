@@ -25,12 +25,16 @@
 #include "water/components.hpp"
 #include "water/water_mesh.hpp"
 #include <water/water_render_module.hpp>
+#include <bloom/bloom.hpp>
+#include "camera_noise/camera_noise.hpp"
 
 Camera camera;
 
 float lastX = 800.0f / 2.0f;
 float lastY = 600.0f / 2.0f;
 bool firstMouse = true;
+const int WIDTH = 1600;
+const int HEIGHT = 1200;
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
@@ -65,9 +69,6 @@ void processInput(GLFWwindow *window, float deltaTime)
   if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
     camera.processKeyboard(DOWN, deltaTime);
 }
-
-const int WIDTH = 1600;
-const int HEIGHT = 1200;
 
 int main()
 {
@@ -137,6 +138,8 @@ int main()
   renderSystem->AddModule(std::make_unique<PBRLightingModule>());
   renderSystem->AddModule(std::make_unique<AnimationsObjectModule>());
   renderSystem->AddModule(std::make_unique<WaterModule>(-7));
+  renderSystem->postProcessPasses.push_back(std::make_unique<BloomPass>(WIDTH, HEIGHT));
+  renderSystem->postProcessPasses.push_back(std::make_unique<CameraNoisePass>());
 
   // Register and configure physics system
   auto physicsSystem = coordinator->RegisterSystem<PhysicsSystem>();
@@ -152,7 +155,7 @@ int main()
 
   // load assets
   auto fireTexture = textureManager.load("assets/textures/fire.png");
-  auto skyTexture = textureManager.load("assets/textures/sky3.png");
+  auto skyTexture = textureManager.load("assets/textures/sky.png");
   auto manTextures = Material::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manTexturesPBR = PBRMaterial::createModelMaterialsFromFile(&textureManager, "assets/models/animationMan/man.gltf");
   auto manModel = AnimatedModel::createModelFromFile("assets/models/animationMan/man.gltf");

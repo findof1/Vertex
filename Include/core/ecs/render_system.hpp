@@ -53,6 +53,10 @@ class PostProcessPass
 public:
     std::string shaderVert;
     std::string shaderFrag;
+    virtual unsigned int DoSubPasses(RenderSystem *renderSystem, unsigned int inputTex, int &passIndex)
+    {
+        return inputTex;
+    };
     virtual void UploadUniforms(unsigned int program) {};
 };
 
@@ -95,4 +99,7 @@ public:
     void InitPostProcessing();
     void Update(float deltaTime, const Camera &camera);
     void RenderScene(float deltaTime, const Camera &camera, bool mainRender = true, bool useClippingPlane = false, glm::vec4 clippingPlane = glm::vec4(-1));
+
+    // returns image that results from pass, passIndex is the number of passes that have already happened in the frame
+    unsigned int DoPostProcessPass(std::unique_ptr<PostProcessPass> &pass, unsigned int inputTex, int &passIndex);
 };

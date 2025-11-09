@@ -192,29 +192,11 @@ void RenderSystem::Update(float deltaTime, const Camera &camera)
     bool firstIteration = true;
     unsigned int inputTex = sceneColorTex;
 
-    for (size_t i = 0; i < postProcessPasses.size(); i++)
+    int i = 0;
+    for (size_t j = 0; j < postProcessPasses.size(); j++)
     {
-        auto &pass = postProcessPasses[i];
-        unsigned int targetFBO = pingpongFBO[i % 2];
-
-        glBindFramebuffer(GL_FRAMEBUFFER, targetFBO);
-        glViewport(0, 0, screenWidth, screenHeight);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        unsigned int shader = GetOrCreateShader(pass->shaderVert, pass->shaderFrag);
-        glUseProgram(shader);
-
-        pass->UploadUniforms(shader);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, inputTex);
-        glUniform1i(glGetUniformLocation(shader, "screenTexture"), 0);
-
-        glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
-
-        inputTex = pingpongColorTex[i % 2];
+        auto &pass = postProcessPasses[j];
+        inputTex = DoPostProcessPass(pass, inputTex, i);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -233,6 +215,34 @@ void RenderSystem::Update(float deltaTime, const Camera &camera)
     glBindVertexArray(0);
 
     glEnable(GL_DEPTH_TEST);
+}
+
+unsigned int RenderSystem::DoPostProcessPass(std::unique_ptr<PostProcessPass> &pass, unsigned int inputTex, int &passIndex)
+{
+    unsigned int texture = pass->DoSubPasses(this, inputTex, passIndex);
+
+    unsigned int targetFBO = pingpongFBO[passIndex % 2];
+
+    glBindFramebuffer(GL_FRAMEBUFFER, targetFBO);
+    glViewport(0, 0, screenWidth, screenHeight);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    unsigned int shader = GetOrCreateShader(pass->shaderVert, pass->shaderFrag);
+    glUseProgram(shader);
+
+    pass->UploadUniforms(shader);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(shader, "screenTexture"), 0);
+
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+
+    unsigned int returnImage = pingpongColorTex[passIndex % 2];
+    passIndex++;
+    return returnImage;
 }
 
 void RenderSystem::RenderScene(float deltaTime, const Camera &camera, bool mainRender, bool useClippingPlane, glm::vec4 clippingPlane)
